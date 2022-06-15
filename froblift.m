@@ -1,3 +1,7 @@
+freeze;
+
+import "coho.m": ord_r_mat;
+
 getrings:=function(p,N)
 
   // Construct rings mod p^N.

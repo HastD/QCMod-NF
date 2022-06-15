@@ -1,7 +1,11 @@
+freeze;
 
 //////////////////////////////////////////////////
 // Function for computing Hecke correspondence  //
 //////////////////////////////////////////////////
+
+import "singleintegrals.m": coleman_data;
+import "misc.m": lindepQp;
 
 hecke_corr := function(data,q,N : basis0:=[],basis1:=[],printlevel:=1,use_polys:=[])
 

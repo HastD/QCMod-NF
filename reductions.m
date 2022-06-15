@@ -1,3 +1,10 @@
+freeze;
+
+import "auxpolys.m": log;
+import "coho.m": ord_0_mat, ord_inf_mat;
+
+Qx<x>:=PolynomialRing(RationalField());
+
 reduce_mod_pN_Q:=function(f,p,N);
 
   // Reduce a rational number f mod p^N.

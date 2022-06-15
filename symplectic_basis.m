@@ -1,3 +1,6 @@
+freeze;
+
+import "misc.m": function_field;
 
 function cup_product_matrix_split_places(basis, Q, g, r, W0 : prec := 15)
 

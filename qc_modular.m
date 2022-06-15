@@ -1,13 +1,20 @@
+freeze;
+
 // July 21: JSM/JB added precision estimates
 // August 21: ND added use_polys
 
-load "coleman.m";
-load "symplectic_basis.m";
-load "hecke_correspondence.m";
-load "hodge.m";
-load "frobenius.m"; 
-load "heights.m";
-load "second_patch_quartic.m";
+import "auxpolys.m": auxpolys, log;
+import "singleintegrals.m": coleman_data, evalf0, h1_basis, is_bad, local_coord, set_point, tadicprec, teichmueller_pt, xy_coordinates;
+import "misc.m": are_congruent, equivariant_splitting, eval_mat_R, eval_Q, FindQpointQp, fun_field, lindepQp, minprec, minval, minvalp;
+import "applications.m": Q_points, Qp_points, roots_with_prec, separate;
+import "symplectic_basis.m": cup_product_matrix, symplectic_basis;
+import "hecke_correspondence.m": hecke_corr;
+import "hodge.m": hodge_data;
+import "frobenius.m": frob_struc;
+import "heights.m": E1_tensor_E2, expand_algebraic_function, frob_equiv_iso, height, parallel_transport, parallel_transport_to_z;
+import "second_patch_quartic.m": curve, second_affine_patch;
+
+Qx<x>:=PolynomialRing(RationalField());
 
 
 function QCModAffine(Q, p : N := 15, prec := 2*N, basis0 := [], basis1 := [], basis2 := [], 

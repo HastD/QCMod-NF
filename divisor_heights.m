@@ -1,3 +1,5 @@
+freeze;
+
 /* Compute the local p-adic height at p between two divisors D and E with disjoint support.
 The algorithm is described in Balakrishnan-Besser, IMRN 2012.
 Most of the code is a copy of Sage-Code due to Jennifer Balakrishnan.
@@ -25,6 +27,11 @@ TODO:
   - Missing cases in omega_integral
   - frob_diff_nw
 */
+
+import "auxpoly.m": log;
+import "reductions.m": reduce_mod_pN_Q_mat;
+import "singleintegrals.m": coleman_integrals_on_basis, find_bad_point_in_disk, frobenius_pt, is_bad, lie_in_same_disk, local_coord, set_point;
+
 
 Qx<x>:=PolynomialRing(RationalField());
 Qxy<y>:=PolynomialRing(Qx);

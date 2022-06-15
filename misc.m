@@ -1,6 +1,12 @@
+freeze;
+
 //////////////////////////
 // Some extra functions //
 //////////////////////////
+
+import "coho.m": ord_r_mat;
+import "singleintegrals.m": is_bad, coleman_integrals_on_basis_divisors;
+
 
 // Algebraic recognition for element in Qp.
 function algdepQp(a,deg)

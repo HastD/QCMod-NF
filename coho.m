@@ -1,3 +1,5 @@
+freeze;
+
 mat_W0:=function(Q)
 
   // Compute the matrix W0 using MaximalOrderFinite

@@ -1,7 +1,11 @@
+freeze;
+
 // Find a good second affine patch for smooth plane quartics so that
 // - every residue disk is good (i.e. is affine and the Frobenius lift is defined
 //   there) on at least one affine patch
 // - every affine patch contains enough rational points to fit the height pairing.
+
+import "misc.m": function_field;
 
 function curve(Q)
   // given a bivariate polynomial in K[x][y], construct the curve Q = 0

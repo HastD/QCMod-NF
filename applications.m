@@ -1,3 +1,11 @@
+freeze;
+
+import "auxpolys.m": genus;
+import "reductions.m": reduce_mod_pN_Q;
+import "singleintegrals.m": coleman_integrals_on_basis, find_bad_point_in_disk, is_bad, is_very_bad, local_coord,
+  local_data, set_bad_point, tadicprec, teichmueller_pt, tiny_integrals_on_basis_to_z, update_minpolys;
+import "misc.m": compare_vals, count_roots_in_unit_ball;
+
 function are_equal_records(P, Q)
   return &and[IsWeaklyEqual(P`x, Q`x), P`inf eq Q`inf,
             &and[IsWeaklyEqual(P`b[i], Q`b[i]) : i in [1..#P`b]]];

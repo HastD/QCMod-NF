@@ -1,7 +1,16 @@
+freeze;
 
 //////////////////////////////////////////////////
 // Functions for computing Frobenius structures //
 //////////////////////////////////////////////////
+
+import "auxpoly.m": log;
+import "coho.m": ord_inf_mat;
+import "froblift.m": frobenius, getrings, radix_reduce, reduce_mod_Q;
+import "reductions.m": change_basis_b0binf, convert_to_Qxzzinvd, reduce_with_fs;
+import "misc.m": compute_F, eval_R, fun_field, Qxzzinvd_to_R;
+
+Qx<x>:=PolynomialRing(RationalField());
 
 // July 21: JSM/JB added precision estimates
 // 17/04/20: tried to extend this to allow for slightly worse singularities (in Tuitman's notation e.g. the denominators of the entries of W0 not being divisible by r). Not sure that it's worked.

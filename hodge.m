@@ -1,8 +1,10 @@
+freeze;
+
 //////////////////////////////////////////////
 // Functions for computing Hodge structures //
 //////////////////////////////////////////////
 
-
+import "misc.m": fun_field;
 
 hodge_data:=function(data,Z,bpt: prec := 5)
 

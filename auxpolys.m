@@ -1,3 +1,5 @@
+freeze;
+
 auxpolys:=function(Q);
 
   // Compute the polynomials r,Delta,s.

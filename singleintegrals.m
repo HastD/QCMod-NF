@@ -1,3 +1,13 @@
+freeze;
+
+import "auxpolys.m": auxpolys, genus, is_integral, log, smooth;
+import "coho.m": ord_0_mat, ord_inf_mat, mat_W0, mat_Winf, con_mat, ddx_mat, jordan_inf, jordan_0, ram, basis_coho;
+import "froblift.m": frobenius, froblift, getrings;
+import "reductions.m": convert_to_Qxzzinvd, reduce_with_fs, red_lists;
+
+Qx<x>:=PolynomialRing(RationalField());
+Qxy<y>:=PolynomialRing(Qx);
+
 max_prec:=function(Q,p,N,g,W0,Winf,e0,einf);
 
   // Compute the p-adic precision required for provable correctness
