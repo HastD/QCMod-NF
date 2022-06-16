@@ -1,3 +1,5 @@
+freeze;
+
 // Code for the Mordell-Weil sieve
 // Mostly copied from an earlier version of magma's Mordell-Weil sieve, due to Michael Stoll.
 // Some tweaks added for use with quadratic Chabauty, but not optimised.

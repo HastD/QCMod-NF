@@ -1,10 +1,13 @@
+freeze;
+
 // Initialize the qc/mws computation for genus 2 curves having RM and rank 2.
 // This requires magma version >= 2.25 for MordellWeilGroupGenus2.
 //
 // If your version of magma is older, use a subgroup of finite index, or find the code on
 // Stoll's webpage.
 
-load "mws_qc.m";  // Mordell-Weil sieve implementation
+// Mordell-Weil sieve implementation
+import "mws_qc.m": sieving_primes;
 
 
 PR<x> := PolynomialRing(RationalField());
