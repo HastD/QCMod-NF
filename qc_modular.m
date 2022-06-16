@@ -15,14 +15,20 @@ import "heights.m": E1_tensor_E2, expand_algebraic_function, frob_equiv_iso, hei
 import "second_patch_quartic.m": curve, second_affine_patch;
 
 Qx<x>:=PolynomialRing(RationalField());
+Qxy<y>:=PolynomialRing(Qx);
 
 
-function QCModAffine(Q, p : N := 15, prec := 2*N, basis0 := [], basis1 := [], basis2 := [], 
-    number_of_correspondences := 0, printlevel := 0, debug := false, base_point := 0, 
-    hecke_prime := 0, unit_root_splitting := false, eqsplit := 0,
-  height_coeffs := [], rho := 0, use_log_basis := false, use_polys:=[]);
+intrinsic QCModAffine(Q::RngUPol[RngUPol], p::RngIntElt :
+                      N := 15, prec := 2*N, basis0 := [], basis1 := [], basis2 := [], 
+                      number_of_correspondences := 0, printlevel := 0, debug := false, base_point := 0, 
+                      hecke_prime := 0, unit_root_splitting := false, eqsplit := 0,
+                      height_coeffs := [], rho := 0, use_log_basis := false, use_polys:=[])
+  -> SeqEnum[FldRatElt], BoolElt, SeqEnum[FldRatElt], Rec, List, SeqEnum[Rec]
+  {Main function, takes a plane affine curve (not necessarily 
+    smooth) with integer coefficients, monic in y, and a prime p and outputs the rational points 
+    in those disks where Tuitman's Frobenius lift is defined. Also outputs additional information, such 
+    as additional p-adic solutions which don't look rational.}
 //nice_correspondences := [], away_contributions := [0], 
-
 // INPUT
 //  * Q is a bivariate polynomial with integer coefficients, defining a smooth affine plane curve
 //    such that its smooth projective model X and J = Jac(X) satisfy
@@ -867,7 +873,7 @@ function QCModAffine(Q, p : N := 15, prec := 2*N, basis0 := [], basis1 := [], ba
     return good_affine_rat_pts_xy, true, bad_affine_rat_pts_xy, data, fake_rat_pts, bad_Qppoints;
   end if;
 
-end function;
+end intrinsic;
 
 
 
@@ -880,11 +886,12 @@ end function;
 
 
 
-function QCModQuartic(Q, S : p := 3, bound := 100, number_of_correspondences := 2, 
-                printlevel := 0, known_pts := [], height_bd := 10^4, debug := false, base_point := 0,
-                N := 15, prec := 2*N, max_inf_deg := 6 )
-
-
+intrinsic QCModQuartic(Q::RngUPol[RngUPol], S::ModSym :
+                      p := 3, bound := 100, number_of_correspondences := 2, 
+                      printlevel := 0, known_pts := [], height_bd := 10^4, debug := false, base_point := 0,
+                      N := 15, prec := 2*N, max_inf_deg := 6 )
+  -> BoolElt, SeqEnum[Pt], RngIntElt, RngUPol[RngUPol]
+  {Takes an integer polynomial defining an affine patch of a smooth plane quartic and outputs the rational points.}
   // S is a space of cusp forms
   // Q is a polynomial in (QQ[x])[y] of total degree 4
   if LeadingCoefficient(Q) ne 1 then 
@@ -964,6 +971,6 @@ function QCModQuartic(Q, S : p := 3, bound := 100, number_of_correspondences := 
     end if; // (not IsDivisibleBy(Level(S), p)) and hecke_operator_generates(S, p) 
   end while;
   return false, _, _, _; 
-end function;
+end intrinsic;
 
 
