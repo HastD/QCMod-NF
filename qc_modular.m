@@ -24,10 +24,9 @@ intrinsic QCModAffine(Q::RngUPol[RngUPol], p::RngIntElt :
                       hecke_prime := 0, unit_root_splitting := false, eqsplit := 0,
                       height_coeffs := [], rho := 0, use_log_basis := false, use_polys:=[])
   -> SeqEnum[FldRatElt], BoolElt, SeqEnum[FldRatElt], Rec, List, SeqEnum[Rec]
-  {Main function, takes a plane affine curve (not necessarily 
-    smooth) with integer coefficients, monic in y, and a prime p and outputs the rational points 
-    in those disks where Tuitman's Frobenius lift is defined. Also outputs additional information, such 
-    as additional p-adic solutions which don't look rational.}
+  {Main function, takes a plane affine curve (not necessarily smooth) with integer coefficients, monic in y,
+  and a prime p and outputs the rational points in those disks where Tuitman's Frobenius lift is defined.
+  Also outputs additional information, such as additional p-adic solutions which don't look rational.}
 //nice_correspondences := [], away_contributions := [0], 
 // INPUT
 //  * Q is a bivariate polynomial with integer coefficients, defining a smooth affine plane curve
