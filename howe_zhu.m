@@ -1,3 +1,5 @@
+freeze;
+
 // Given a curve over the rationals, check whether its Jacobian is absolutely irreducible
 //
 function has_abs_irred_jac_fin_g2(C : printlevel := 0)
@@ -68,7 +70,11 @@ function has_abs_irred_jac_fin(C : printlevel := 0)
 end function;
 
 
-function HasAbsolutelyIrreducibleJacobian(C, bound : printlevel := 0)
+intrinsic HasAbsolutelyIrreducibleJacobian(C::Crv, bound::RngIntElt : printlevel := 0)
+  -> BoolElt, RngIntElt
+  {Implements the criterion of Howe-Zhu, `On the existence of absolutely simple abelian varieties
+  of a given dimension over an arbitrary field`, JNT 2002, to show that abelian varieties are
+  absolutely simple.}
   // C is defined over Q 
   // Check if the Jacobian of C is absolutely irreducible, by checking if its reduction 
   // mod some prime of good reduction is absolutely irreducible.
@@ -93,5 +99,5 @@ function HasAbsolutelyIrreducibleJacobian(C, bound : printlevel := 0)
     p := NextPrime(p);
   end while;
   return false, 0; // This doesn't mean that the Jacobian isn't absolutely irreducible!
-end function;
+end intrinsic;
 
