@@ -6,7 +6,7 @@ freeze;
 
 // July 21: JSM/JB added precision estimates
 
-import "auxpoly.m": log;
+import "auxpolys.m": log;
 import "singleintegrals.m": coleman_integrals_on_basis_divisors, is_bad, lie_in_same_disk, local_coord, tiny_integral_prec;
 import "misc.m": fun_field, minprec;
 import "applications.m": are_equal_records;

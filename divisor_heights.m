@@ -28,7 +28,7 @@ TODO:
   - frob_diff_nw
 */
 
-import "auxpoly.m": log;
+import "auxpolys.m": log;
 import "reductions.m": reduce_mod_pN_Q_mat;
 import "singleintegrals.m": coleman_integrals_on_basis, find_bad_point_in_disk, frobenius_pt, is_bad, lie_in_same_disk, local_coord, set_point;
 

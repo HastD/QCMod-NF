@@ -18,7 +18,7 @@ Qx<x>:=PolynomialRing(RationalField());
 Qxy<y>:=PolynomialRing(Qx);
 
 
-intrinsic QCModAffine(Q::RngUPol[RngUPol], p::RngIntElt :
+intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
                       N := 15, prec := 2*N, basis0 := [], basis1 := [], basis2 := [], 
                       number_of_correspondences := 0, printlevel := 0, debug := false, base_point := 0, 
                       hecke_prime := 0, unit_root_splitting := false, eqsplit := 0,
@@ -885,11 +885,11 @@ end function;
 
 
 
-intrinsic QCModQuartic(Q::RngUPol[RngUPol], S::ModSym :
+intrinsic QCModQuartic(Q::RngUPolElt[RngUPol], S::ModSym :
                       p := 3, bound := 100, number_of_correspondences := 2, 
                       printlevel := 0, known_pts := [], height_bd := 10^4, debug := false, base_point := 0,
                       N := 15, prec := 2*N, max_inf_deg := 6 )
-  -> BoolElt, SeqEnum[Pt], RngIntElt, RngUPol[RngUPol]
+  -> BoolElt, SeqEnum[Pt], RngIntElt, RngUPolElt[RngUPol]
   {Takes an integer polynomial defining an affine patch of a smooth plane quartic and outputs the rational points.}
   // S is a space of cusp forms
   // Q is a polynomial in (QQ[x])[y] of total degree 4

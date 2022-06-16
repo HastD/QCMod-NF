@@ -1,6 +1,9 @@
 SetLogFile("qc_Xs13plus.log");
-load "qc_modular.m";
-load "howe_zhu.m";
+AttachSpec("QCMod.spec");
+
+import "auxpolys.m": auxpolys;
+import "coho.m": reduce_mod_Q_exact;
+import "misc.m": rank_J0Nplus;
 
 // X_s(13)+ is isomorphic to X0(169)+ (and to X_ns(13)+)
 level := 169;
@@ -16,6 +19,8 @@ X := X0NQuotient(169, [169]); X;
 X1 := AffinePatch(X, 1);
 A2<y0, x0> := AmbientSpace(X1); Equation(X1);
 //
+Qx<x> := PolynomialRing(RationalField());
+Qxy<y> := PolynomialRing(Qx);
 Q := y^3 + y^2*x^2 + y^2*x + y^2 + y*x^3 + y*x - y + x^3 - 3*x^2 + x;
 time success, Cpts, p, Q_inf := QCModQuartic(Q, S : N := 25, printlevel := 1);
 assert success;

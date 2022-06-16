@@ -4,7 +4,7 @@ freeze;
 // Functions for computing Frobenius structures //
 //////////////////////////////////////////////////
 
-import "auxpoly.m": log;
+import "auxpolys.m": log;
 import "coho.m": ord_inf_mat;
 import "froblift.m": frobenius, getrings, radix_reduce, reduce_mod_Q;
 import "reductions.m": change_basis_b0binf, convert_to_Qxzzinvd, reduce_with_fs;
