@@ -4,7 +4,7 @@ freeze;
 // August 21: ND added use_polys
 
 import "auxpolys.m": auxpolys, log;
-import "singleintegrals.m": coleman_data, evalf0, h1_basis, is_bad, local_coord, set_point, tadicprec, teichmueller_pt, xy_coordinates;
+import "singleintegrals.m": evalf0, is_bad, local_coord, set_point, tadicprec, teichmueller_pt, xy_coordinates;
 import "misc.m": are_congruent, equivariant_splitting, eval_mat_R, eval_Q, FindQpointQp, fun_field, lindepQp, minprec, minval, minvalp;
 import "applications.m": Q_points, Qp_points, roots_with_prec, separate;
 import "heights.m": E1_tensor_E2, expand_algebraic_function, frob_equiv_iso, height, parallel_transport, parallel_transport_to_z;
@@ -111,7 +111,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
   // ==========================================================
 
   if pl gt 1 then print " Computing a symplectic basis of H^1"; end if;
-  h1basis, g, r, W0 := h1_basis(Q,p,N);  
+  h1basis, g, r, W0 := H1Basis(Q,p,N);
   if #basis0*#basis1 gt 0 then // Use the given basis
     h1basis := basis0 cat basis1;
   end if;
@@ -157,7 +157,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
     basis0 := [[sympl_basis[i,j] : j in [1..Degree(Q)]] : i in [1..g]]; // basis of regular differentials
     basis1 := [[sympl_basis[i,j] : j in [1..Degree(Q)]] : i in [g+1..2*g]];  // basis of complementary subspace
   end if;
-  data := coleman_data(Q,p,N : useU:=true,  basis0 := basis0, basis1 := basis1, basis2 := basis2);
+  data := ColemanData(Q,p,N : useU:=true,  basis0 := basis0, basis1 := basis1, basis2 := basis2);
   if pl gt 1 then printf " Computed Coleman data at p=%o to precision %o.\n", p,N; end if;
 
   prec := Max(100, tadicprec(data, 1));

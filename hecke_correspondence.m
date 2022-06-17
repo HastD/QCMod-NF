@@ -4,7 +4,6 @@ freeze;
 // Function for computing Hecke correspondence  //
 //////////////////////////////////////////////////
 
-import "singleintegrals.m": coleman_data;
 import "misc.m": lindepQp;
 
 intrinsic HeckeCorrespondenceQC(data::Rec, q::RngIntElt, N::RngIntElt :
@@ -54,7 +53,7 @@ intrinsic HeckeCorrespondenceQC(data::Rec, q::RngIntElt, N::RngIntElt :
 
   if q ne p then 
     if printlevel gt 0 then print  "\nCompute Coleman data wrt q=", q; end if;
-    data:=coleman_data(Q,q,N:basis0:=basis0,basis1:=basis1);
+    data:=ColemanData(Q,q,N:basis0:=basis0,basis1:=basis1);
   end if;
 
   F := data`F;

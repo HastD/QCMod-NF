@@ -20,7 +20,7 @@ _<x,y> := PolynomialRing(Rationals(), 2);
 "Second affine patch", 5/188*Evaluate(Equation(D), [1,x,y]);
 
 
-load "qc_modular.m";
+AttachSpec("QCMod.spec");
 
 Q1:= y^6 + (24/5*x + 12/5)*y^5 + (-99*x^2 - 543/5*x - 153/5)*y^4 + (-1472/5*x^3 - 2814/5*x^2 - 1719/5*x - 337/5)*y^3 + 
     (-1686/5*x^4 - 975*x^3 - 4761/5*x^2 - 1902/5*x - 263/5)*y^2 + (-108*x^5 - 2082/5*x^4 - 2952/5*x^3 - 375*x^2 - 107*x 

@@ -187,7 +187,14 @@ intrinsic CupProductMatrix(basis::SeqEnum[ModTupRngElt[RngUPol]], Q::RngUPolElt[
   return C, x_expansions_inf;
 end intrinsic;
 
-
+// For coercing basis to sequence of vectors if need be
+intrinsic CupProductMatrix(basis::SeqEnum[SeqEnum[RngUPol]], Q::RngUPolElt[RngUPol], g::RngIntElt, r::RngUPolElt, W0::AlgMatElt[FldFunRat] :
+                           prec := 15, split := true)
+  -> AlgMatElt, SeqEnum[RngSerLaurElt]
+  {Given a basis of H^1_dR of a smooth projective curve such that the
+  first g elements generate regular differentials, computes the cup product.}
+  return CupProductMatrix([Vector(v) : v in basis], Q, g, r, W0 : prec := prec, split := split);
+end intrinsic;
 
 
 intrinsic SymplecticBasisH1(C::AlgMatElt) -> ModMatFldElt, ModTupFld

@@ -57,11 +57,10 @@ frobmatrix:=function(Q,p,N,Nmax,g,r,W0,Winf,G0,Ginf,frobmatb0r,red_list_fin,red_
 end function;
 
 
-function h1_basis(Q,p,N)
-  // Compute a basis for H^1(X).
-  if not IsIrreducible(Q) then
-    error "Curve is not irreducible";
-  end if;
+intrinsic H1Basis(Q::RngUPolElt[RngUPol], p::RngIntElt, N::RngIntElt)
+  -> SeqEnum[ModTupRngElt[RngUPol]], RngIntElt, RngUPolElt, AlgMatElt[FldFunRat]
+  {Compute a basis for H^1(X).}
+  require IsIrreducible(Q): "Curve is not irreducible";
 
   d:=Degree(Q);
   g:=genus(Q,p);
@@ -89,18 +88,17 @@ function h1_basis(Q,p,N)
 
   basis:=basis_coho(Q,p,r,W0,Winf,G0,Ginf,J0,Jinf,T0inv,Tinfinv,false,[],[],[]);
   return basis,g,r,W0;
-end function;
+end intrinsic;
 
 
-coleman_data:=function(Q,p,N:useU:=false,basis0:=[],basis1:=[],basis2:=[],heights:=false)
+intrinsic ColemanData(Q::RngUPolElt[RngUPol], p::RngIntElt, N::RngIntElt :
+                      useU:=false, basis0:=[], basis1:=[], basis2:=[], heights:=false)
+  -> Rec
+  {Takes a polynomial Q in two variables x,y over the rationals which is monic in y.
+  Returns the Coleman data of (the projective nonsingular model of) the curve defined
+  by Q at p to p-adic precision N.}
 
-  // Takes a polynomial Q in two variables x,y over the rationals which is monic in y.
-  // Returns the Coleman data of (the projective nonsingular model of) the curve defined
-  // by Q at p to p-adic precision N.
-
-  if not IsIrreducible(Q) then
-    error "Curve is not irreducible";
-  end if;
+  require IsIrreducible(Q): "Curve is not irreducible";
 
   d:=Degree(Q);
   g:=genus(Q,p);
@@ -112,9 +110,10 @@ coleman_data:=function(Q,p,N:useU:=false,basis0:=[],basis1:=[],basis2:=[],height
   Winfinv:=Winf^(-1);
   W:=Winf*W0^(-1);
 
-  if (FiniteField(p)!LeadingCoefficient(Delta) eq 0) or (Degree(r) lt 1) or (not smooth(r,p)) or (not (is_integral(W0,p) and is_integral(W0inv,p) and is_integral(Winf,p) and is_integral(Winfinv,p))) then
-    error "bad prime";
-  end if;
+  require FiniteField(p)!LeadingCoefficient(Delta) ne 0: "Bad prime";
+  require Degree(r) ge 1: "Bad prime";
+  require smooth(r,p): "Bad prime";
+  require is_integral(W0,p) and is_integral(W0inv,p) and is_integral(Winf,p) and is_integral(Winfinv,p): "Bad prime";
 
   G:=con_mat(Q,Delta,s);
   G0:=W0*Evaluate(G,Parent(W0[1,1]).1)*W0^(-1)+ddx_mat(W0)*W0^(-1);
@@ -146,8 +145,7 @@ coleman_data:=function(Q,p,N:useU:=false,basis0:=[],basis1:=[],basis2:=[],height
   out`frobmatb0r:=frobmatb0r;
 
   return out;
-
-end function;
+end intrinsic;
 
 function xy_coordinates(P, data)
 

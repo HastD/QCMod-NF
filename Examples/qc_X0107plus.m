@@ -2,7 +2,7 @@ SetLogFile("qc_X0107plus.log");
 
 AttachSpec("QCMod.spec");
 
-import "singleintegrals.m": coleman_data, set_point;
+import "singleintegrals.m": set_point;
 import "misc.m": coefficients_mod_pN;
 import "heights.m": height_coefficients;
 import "qc_init_g2.m": find_qc_primes, generators, height_init_g2, rationalize;
@@ -63,7 +63,7 @@ splitting_generators, divisors, intersections, splitting_indices, odd_divisors_Q
 
 odd_f_Qp := HyperellipticPolynomials(Curve(odd_divisors_Qp[1,1,1]));
 odd_f := ChangeRing(odd_f_Qp, Rationals());
-odd_data := coleman_data(y^2-odd_f, p, 9 : useU :=false, heights);
+odd_data := ColemanData(y^2-odd_f, p, 9 : useU :=false, heights);
 odd_divisors := [* [*rationalize(D[1]), rationalize(D[2])*] : D in odd_divisors_Qp *];
 
 odd_data_divisors :=  [
@@ -101,7 +101,7 @@ N := 6;
 "local heights", local_CG_hts;
                   
 
-data := coleman_data(y^2-f, p, N : useU :=false);
+data := ColemanData(y^2-f, p, N : useU :=false);
 height_coeffs := height_coefficients(divisors, intersections, local_CG_hts, data);
 
 printf "\nStarting quadratic Chabauty for p = %o.\n", p;
@@ -122,7 +122,7 @@ end for;
   //      * bad_Qppoints contains the disks where Frob isn't defined
   //
   // Express the images of the solutions under Abel-Jacobi in terms of the generators mod p^N
-data := coleman_data(y^2-f, p, 6 : useU :=false);
+data := ColemanData(y^2-f, p, 6 : useU :=false);
   fake_coeffs_mod_pN, rat_coeffs_mod_pN := coefficients_mod_pN(fake_rat_pts, good_affine_rat_pts_xy, divisors, base_pt, splitting_indices, data); 
   // Check that the coefficients of the known rational points are correct.
   assert &and[&+[rat_coeffs_mod_pN[j,i] * bas[i] : i in [1..gX]] eq X!good_affine_rat_pts_xy[j] - X!base_pt : j in [1..#good_affine_rat_pts_xy]];

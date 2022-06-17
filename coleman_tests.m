@@ -1,6 +1,6 @@
 AttachSpec("coleman.spec");
 
-import "singleintegrals.m": coleman_data, coleman_integrals_on_basis, set_point, set_bad_point, tiny_integrals_on_basis;
+import "singleintegrals.m": coleman_integrals_on_basis, set_point, set_bad_point, tiny_integrals_on_basis;
 
 
 // These are tests for the Coleman integration code, not quadratic Chabauty
@@ -15,7 +15,7 @@ Qxy<y> := PolynomialRing(Qx);
 Q:=y^2-(x^3-10*x+9);
 p:=5;
 N:=10;
-data:=coleman_data(Q,p,N);
+data:=ColemanData(Q,p,N);
 
 print "/////////////////////";
 print "// 1a. good points //";
@@ -54,7 +54,7 @@ Q:=y^3 + (-x^2 - 1)*y^2 - x^3*y + x^3 + 2*x^2 + x;
 p:=7;
 N:=10;
 Qp:=pAdicField(p,N);
-data:=coleman_data(Q,p,N);
+data:=ColemanData(Q,p,N);
 
 print "/////////////////////";
 print "// 2a. good points //";
@@ -106,7 +106,7 @@ print "/////////////////////////////////////////////////////\n";
 Q:=y^5+12*x^2*y^3-14*x^2*y^2+(13*x^4+6*x^2)*y-(11*x^6+6*x^4+x^2);
 p:=7;
 N:=10;
-data:=coleman_data(Q,p,N);
+data:=ColemanData(Q,p,N);
 
 print "/////////////////////";
 print "// 3a. good points //";
