@@ -7,8 +7,6 @@ import "auxpolys.m": auxpolys, log;
 import "singleintegrals.m": coleman_data, evalf0, h1_basis, is_bad, local_coord, set_point, tadicprec, teichmueller_pt, xy_coordinates;
 import "misc.m": are_congruent, equivariant_splitting, eval_mat_R, eval_Q, FindQpointQp, fun_field, lindepQp, minprec, minval, minvalp;
 import "applications.m": Q_points, Qp_points, roots_with_prec, separate;
-import "symplectic_basis.m": cup_product_matrix, symplectic_basis;
-import "hecke_correspondence.m": hecke_corr;
 import "heights.m": E1_tensor_E2, expand_algebraic_function, frob_equiv_iso, height, parallel_transport, parallel_transport_to_z;
 import "second_patch_quartic.m": curve, second_affine_patch;
 
@@ -140,9 +138,9 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
   if assigned cpm then delete cpm; end if;
   repeat 
     try 
-      cpm := cup_product_matrix(h1basis, Q, g, r, W0 : prec := cpm_prec);
+      cpm := CupProductMatrix(h1basis, Q, g, r, W0 : prec := cpm_prec);
       // If this takes very long, try 
-      // cpm := cup_product_matrix(h1basis, Q, g, r, W0 : prec := cpm_prec, split := false);
+      // cpm := CupProductMatrix(h1basis, Q, g, r, W0 : prec := cpm_prec, split := false);
     catch e;
       cpm_prec +:= g;
       if pl gt 3 then print "try again"; end if;
@@ -150,7 +148,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
   until assigned cpm;
   if pl gt 2 then print " Cup product matrix", cpm; end if;
   if cpm ne standard_sympl_mat then 
-    coefficients := symplectic_basis(cpm); // Create coefficients of a symplectic basis in terms of h1basis
+    coefficients := SymplecticBasisH1(cpm); // Create coefficients of a symplectic basis in terms of h1basis
     new_complementary_basis := [&+[coefficients[i,j]*h1basis[j] : j in [1..2*g]] : i in [1..g]];
     sympl_basis := [h1basis[i] : i in [1..g]] cat new_complementary_basis;
     if not &and[&and[Valuation(c, p) ge 0 : c in Coefficients(w[1])] : w in sympl_basis] then
@@ -244,7 +242,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
   // Want rho-1 independent `nice` correspondences.
   // Construct them using powers of Hecke operator
   q := IsZero(hecke_prime) select p else hecke_prime;
-  correspondences, Tq, corr_loss := hecke_corr(data,q,N : basis0:=basis0,basis1:=basis1,printlevel:=pl,use_polys:=use_polys);
+  correspondences, Tq, corr_loss := HeckeCorrespondenceQC(data,q,N : basis0:=basis0,basis1:=basis1,printlevel:=pl,use_polys:=use_polys);
 
   Ncorr := N + Min(corr_loss, 0);
   // correspondences and Tq are provably correct to O(p^Ncorr), at least if q = p. We

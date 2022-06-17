@@ -16,8 +16,8 @@ import "misc.m": compute_F, eval_R, fun_field, Qxzzinvd_to_R;
 
 // 16/04/20: To get this to work when the model is not smooth, we have to change how we compute basisR, phiomega, phiomegaZf and g0omega (which were originally written assuming that b^0 = [1,y,...,y^(d-1)] or equivalently that W0 is the identity. This just involves selectively multiplying by W0 or its inverse. This also means we have to do some additional reductions (i.e. quotient out by z=r/LeadingCoefficient(r). This is done using radix_reduce.
 
-intrinsic FrobeniusStructure(data::Rec, Z::Mtrx, eta::ModTupRngElt, bpt::SeqEnum[FldRatElt] : N:=0)
-  -> Mtrx, RngIntElt
+intrinsic FrobeniusStructure(data::Rec, Z::AlgMatElt, eta::ModTupFldElt, bpt::SeqEnum[FldRatElt] : N:=0)
+  -> AlgMatElt[RngUPol[RngSerLaur[RngUPol[RngIntRes]]]], RngIntElt
   {Compute the matrix G of the (inverse) Frobenius structure on A_Z.}
 
   Qx<x>:=PolynomialRing(RationalField());

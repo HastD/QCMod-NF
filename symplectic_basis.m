@@ -79,8 +79,11 @@ function cup_product_matrix_split_places(basis, Q, g, r, W0 : prec := 15)
 end function;
 
 
-function cup_product_matrix(basis, Q, g, r, W0 : prec := 15, split := true)
-
+intrinsic CupProductMatrix(basis::SeqEnum[ModTupRngElt[RngUPol]], Q::RngUPolElt[RngUPol], g::RngIntElt, r::RngUPolElt, W0::AlgMatElt[FldFunRat] :
+                           prec := 15, split := true)
+  -> AlgMatElt, SeqEnum[RngSerLaurElt]
+  {Given a basis of H^1_dR of a smooth projective curve such that the
+  first g elements generate regular differentials, computes the cup product.}
   // split determines whether we work over an extension
   // where all places split. This is usually faster.
 
@@ -182,12 +185,14 @@ function cup_product_matrix(basis, Q, g, r, W0 : prec := 15, split := true)
 
   end for;
   return C, x_expansions_inf;
-end function;
+end intrinsic;
 
 
 
 
-function symplectic_basis(C)
+intrinsic SymplecticBasisH1(C::AlgMatElt) -> ModMatFldElt, ModTupFld
+  {Given the cup product matrix of H^1_dR of a smooth projective curve, computes
+  a symplectic basis with respect to the cup product.}
   // C  is the cup product matrix for some basis (omega_i)_{i=1,..,2g} of H^1 such that
   // omega_1,...,omega_g are holomorphic.
   // Compute linear combinations eta_1,...,eta_g of the omega_i such that
@@ -276,5 +281,5 @@ function symplectic_basis(C)
     end for;
   end for;
   return A, K;
-end function;
+end intrinsic;
 

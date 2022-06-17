@@ -7,17 +7,19 @@ freeze;
 import "singleintegrals.m": coleman_data;
 import "misc.m": lindepQp;
 
-hecke_corr := function(data,q,N : basis0:=[],basis1:=[],printlevel:=1,use_polys:=[])
+intrinsic HeckeCorrespondenceQC(data::Rec, q::RngIntElt, N::RngIntElt :
+                                basis0:=[], basis1:=[], printlevel:=1, use_polys:=[])
+  -> SeqEnum[AlgMatElt], AlgMatElt, RngIntElt
+  {For i=1,...,g-1, construct a nice correspondence Zi from the ith power of
+  the Hecke operator Aq using Eichler-Shimura. 
+  N is the precision for the q-adic computation. 
+  
+  Both Aq^i and Zi are encoded as matrices representing their action on H^1_dR(X)
+  
+  If basis0 and basis1 are given, we assume that they form a symplectic basis
+  of H^1_dR(X). If they are not given, such a basis is computed along the way.
+  if a list of rational polynomials [f1,...,fd] is given in use_polys, then the Zi returned will be 2*g*fi(Tq)-Trace(fi(Tq)).}
 
-  // For i=1,...,g-1, construct a nice correspondence Zi from the ith power of
-  // the Hecke operator Aq using Eichler-Shimura. 
-  // N is the precision for the q-adic computation. 
-  //
-  // Both Aq^i and Zi are encoded as matrices representing their action on H^1_dR(X)
-  //
-  // If basis0 and basis1 are given, we assume that they form a symplectic basis
-  // of H^1_dR(X). If they aren't given, such a basis is computed along the way.
-  // if a list of rational polynomials [f1,...,fd] is given in use_polys, then the Zi returned will be 2*g*fi(Tq)-Trace(fi(Tq)).
   Q:=data`Q; g:=data`g; d:=Degree(Q); p:=data`p; 
 
   C:=ZeroMatrix(RationalField(),2*g,2*g);
@@ -122,7 +124,7 @@ hecke_corr := function(data,q,N : basis0:=[],basis1:=[],printlevel:=1,use_polys:
   end if; // #use_polys eq 0 
 
   return Zs, As[1], prec_loss_bd;
-end function;
+end intrinsic;
 
 
 

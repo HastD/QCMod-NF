@@ -4,7 +4,6 @@ AttachSpec("QCMod.spec");
 
 import "singleintegrals.m": coleman_data, set_point;
 import "misc.m": coefficients_mod_pN;
-import "symplectic_basis.m": cup_product_matrix;
 import "heights.m": height_coefficients;
 import "qc_init_g2.m": find_qc_primes, generators, height_init_g2, rationalize;
 
@@ -84,7 +83,7 @@ odd_data_divisors_inv := [
  : i in [1,2]  ]
 ];
 odd_data`ordinary := true;
-odd_data`cpm := -cup_product_matrix(odd_data`basis, odd_data`Q, 2, odd_data`r, odd_data`W0);
+odd_data`cpm := -CupProductMatrix(odd_data`basis, odd_data`Q, 2, odd_data`r, odd_data`W0);
 
 printf "\nStart computation of local height at %o between first pair of divisors\n", p;
 time ht1, D1_data := local_height_divisors_p(odd_data_divisors[1], odd_data_divisors_inv[1],odd_data);

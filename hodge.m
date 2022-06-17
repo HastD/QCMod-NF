@@ -6,8 +6,8 @@ freeze;
 
 import "misc.m": fun_field;
 
-intrinsic HodgeData(data::Rec, Z::Mtrx, bpt::PlcFunElt : prec := 5)
-  -> ModTupRngElt, ModTupRngElt, ModTupRngElt, RngIntElt
+intrinsic HodgeData(data::Rec, Z::AlgMatElt, bpt::PlcFunElt : prec := 5)
+  -> ModTupFldElt, ModTupFldElt, ModTupRngElt[RngUPol], RngIntElt
   {Compute the 1-form eta, as a vector of coefficients
   w.r.t. basis[i] for i=2g+1,...,2g+k-1 where k is the 
   number of points lying over x=infinity.}

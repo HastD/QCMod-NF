@@ -65,7 +65,7 @@ odd_data_divisors_inv := [
  : i in [1,2]  ]
 ];
 odd_data`ordinary := true;
-odd_data`cpm := -cup_product_matrix(odd_data`basis, odd_data`Q, 2, odd_data`r, odd_data`W0);
+odd_data`cpm := -CupProductMatrix(odd_data`basis, odd_data`Q, 2, odd_data`r, odd_data`W0);
 printf "Start computation of local height at %o between first pair of divisors\n", p;
 time ht1, D1_data := local_height_divisors_p(odd_data_divisors[1], odd_data_divisors_inv[1],odd_data);
 "Time for first height";
