@@ -206,7 +206,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
     print "\n Bad affine rational points:", bad_affine_rat_pts_xy;  
   end if;
 
-  if IsZero(base_point) then  // No base point given, take the first possible one.
+  if ISA(Type(base_point), RngIntElt) and IsZero(base_point) then  // No base point given, take the first possible one.
     global_base_point_index := 1;
     bQ := good_Qpoints[global_base_point_index]; // base point as Qpoint
     bQ_xy := good_affine_rat_pts_xy[global_base_point_index];  // xy-coordinates of base point
