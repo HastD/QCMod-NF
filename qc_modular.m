@@ -9,8 +9,6 @@ import "misc.m": are_congruent, equivariant_splitting, eval_mat_R, eval_Q, FindQ
 import "applications.m": Q_points, Qp_points, roots_with_prec, separate;
 import "symplectic_basis.m": cup_product_matrix, symplectic_basis;
 import "hecke_correspondence.m": hecke_corr;
-import "hodge.m": hodge_data;
-import "frobenius.m": frob_struc;
 import "heights.m": E1_tensor_E2, expand_algebraic_function, frob_equiv_iso, height, parallel_transport, parallel_transport_to_z;
 import "second_patch_quartic.m": curve, second_affine_patch;
 
@@ -352,7 +350,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
     hodge_prec := 5; 
     repeat
       try
-        eta,betafil,gammafil,hodge_loss := hodge_data(data,Z,bpt: prec := hodge_prec);
+        eta,betafil,gammafil,hodge_loss := HodgeData(data,Z,bpt: prec := hodge_prec);
       catch e;
         hodge_prec +:= 5;
       end try;
@@ -379,7 +377,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
     b0 := teichmueller_pt(bQ,data); 
     if pl gt 0 then printf  " Computing Frobenius structure for correspondence %o.\n", l; end if;
     b0pt := [QQ!c : c in xy_coordinates(b0, data)]; // xy-coordinates of P
-    G, NG := frob_struc(data,Z,eta,b0pt : N:=Nhodge); 
+    G, NG := FrobeniusStructure(data,Z,eta,b0pt : N:=Nhodge); 
     G_list := [**]; // evaluations of G at Teichmuellers of all good points (0 if bad)
     for i := 1 to numberofpoints do
       if is_bad(Qppoints[i],data) then
@@ -876,12 +874,13 @@ end intrinsic;
 
 
 
-function hecke_operator_generates(S, p)
+intrinsic HeckeOperatorGenerates(S::ModSym, p::RngIntElt)
+  -> BoolElt
+  {Check that the Hecke operator Tp generates the Hecke algebra}
   // S is a space of cusp forms
-  // Check that the Hecke operator Tp generates the Hecke algebra
   Tp := HeckeOperator(S, p);
   return not IsDiagonal(Tp) and Degree(MinimalPolynomial(Tp)) eq Dimension(S) div 2;
-end function;
+end intrinsic;
 
 
 
@@ -908,7 +907,7 @@ intrinsic QCModQuartic(Q::RngUPolElt[RngUPol], S::ModSym :
   while p lt bound do
     p := NextPrime(p);
     bool := false;
-    if (not IsDivisibleBy(Level(S), p)) and hecke_operator_generates(S, p) then
+    if (not IsDivisibleBy(Level(S), p)) and HeckeOperatorGenerates(S, p) then
       // Find a good second affine patch so that
       // - every residue disk is good (i.e. is affine and the Frobenius lift is defined
       //   there) on at least one affine patch
@@ -967,7 +966,7 @@ intrinsic QCModQuartic(Q::RngUPolElt[RngUPol], S::ModSym :
       end if;
 
       return true, Cpts, p, Q_inf;  
-    end if; // (not IsDivisibleBy(Level(S), p)) and hecke_operator_generates(S, p) 
+    end if; // (not IsDivisibleBy(Level(S), p)) and HeckeOperatorGenerates(S, p) 
   end while;
   return false, _, _, _; 
 end intrinsic;

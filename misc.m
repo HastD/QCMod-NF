@@ -369,12 +369,11 @@ end function;
 
 
 
-function rank_J0Nplus(N : Lprec := 30, printlevel := 0)
-
-// Compute the rank of J0(N)+ using Kolyvagin-Logachev. Will
-// throw an error if the analytic rank for any newform appears 
-// to be >1.
-//
+intrinsic rank_J0Nplus(N::RngIntElt : Lprec := 30, printlevel := 0)
+  -> RngIntElt, SeqEnum
+  {Compute the rank of J0(N)+ using Kolyvagin-Logachev. Will
+  throw an error if the analytic rank for any newform appears 
+  to be >1.}
   NF := Newforms(CuspForms(Gamma0(N),2));
   errors := [];
   pl := printlevel;
@@ -410,7 +409,7 @@ function rank_J0Nplus(N : Lprec := 30, printlevel := 0)
     end for; // L in Lseries
   end for; // f in ...
   return rank, errors;
-end function;
+end intrinsic;
 
 
 function minprec(M)

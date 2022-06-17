@@ -753,40 +753,35 @@ function omega_integral(D1, D2, data : N := 0, wlcs := [**], alphas := [**], cyc
 end function;
 
 
-function local_height_divisors_p(D1, D2, data : N := 0, D1_data := 0, printlevel := 0)
-/*  
- * Compute the local p-adic height pairing at p between two divisors D and E with disjoint support
- * on an odd degree hyperelliptic curves over Qp.
- * The theory is described in Coleman-Gross, 89
- * The algorithm is described in Balakrishnan-Besser, IMRN 2012.
- * Heavily based on a sage implementation due to Jennifer Balakrishnan.
- * We assume that D1 and D2 are sequences of pairs [P,Q] of point records as in Jan Tuitmans
- * Coleman integration code. The height pairing between D1 and D2 is then the sum of the
- * pairings between the various divisors P-Q.
- * We currently need an ordinary prime and the unit root splitting, the idele
- * class character is the canonical cylcotomic character coming from the Iwasawa log.
- * 
- * This returns the height and some auxiliary data that can be recycled to compute 
- * height pairings between D1 and other divisors.
- */
+intrinsic local_height_divisors_p(D1::SeqEnum[SeqEnum[Tup]], D2::SeqEnum[SeqEnum[Tup]], data::Rec :
+                                  N := 0, D1_data := 0, printlevel := 0)
+  -> FldPadElt, Tup, RngIntElt
+  {Compute the local p-adic height pairing at p between two divisors D and E with disjoint support
+  on an odd degree hyperelliptic curves over Qp.
+  The theory is described in Coleman-Gross, 89
+  The algorithm is described in Balakrishnan-Besser, IMRN 2012.
+  Heavily based on a sage implementation due to Jennifer Balakrishnan.
+  We assume that D1 and D2 are sequences of pairs [P,Q] of point records as in Jan Tuitmans
+  Coleman integration code. The height pairing between D1 and D2 is then the sum of the
+  pairings between the various divisors P-Q.
+  We currently need an ordinary prime and the unit root splitting, the idele
+  class character is the canonical cylcotomic character coming from the Iwasawa log.
+
+  This returns the height and some auxiliary data that can be recycled to compute 
+  height pairings between D1 and other divisors.
+  }
 
 
   Q := data`Q;
-  assert Degree(Q) eq 2 and IsZero(Coefficient(Q, 1)); // want equation y^2=f(x) 
+  require Degree(Q) eq 2 and IsZero(Coefficient(Q, 1)): "Need equation y^2 = f(x)";
   f := -ConstantCoefficient(Q); // Hyperell poly
-  if not IsOdd(Degree(f)) then
-    error "Currently only implemented for odd degree models";
-  end if;
-  if not IsMonic(f) then
-    error "Currently only implemented for monic models";
-  end if;
+  require IsOdd(Degree(f)): "Currently only implemented for odd degree models";
+  require IsMonic(f): "Currently only implemented for monic models";
   pl := printlevel;
   if IsZero(N) then  N := data`N; end if;
   p := data`p;
   basis := data`basis; g := data`g;
-  if not data`ordinary then
-    error "Currently only implemented for ordinary reduction.";
-  end if;
+  require data`ordinary: "Currently only implemented for ordinary reduction.";
   subspace := unit_root_subspace(data); 
   data`subspace := subspace;
   cpm := data`cpm;
@@ -836,7 +831,7 @@ function local_height_divisors_p(D1, D2, data : N := 0, D1_data := 0, printlevel
   end for;
 
   return ht, <all_wlcs, all_alphas, all_cycl_data>, Nht;
-end function;
+end intrinsic;
 
 
 

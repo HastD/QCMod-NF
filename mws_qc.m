@@ -57,12 +57,15 @@ function MakeDL(G, m)
 end function;
 
 
-function prerun_mwsieve_g2r2(J, bas, base_pt, modulus, p, modp_points : printlevel := 0)
-// Compute all classes in J(Q)/modulus*J(Q) whose image mod p
-// contains the image of an Fp-point on the curve
-// J is assumed to have rank=genus=2
-// TODO: generalize to several primes and higher genus
-  
+intrinsic prerun_mwsieve_g2r2(J::JacHyp, bas::SeqEnum[JacHypPt], base_pt::SeqEnum[FldRatElt], modulus::RngIntElt,
+                              p::RngIntElt, modp_points::SeqEnum[SeqEnum[FldFinElt]] :
+                              printlevel := 0)
+  -> SeqEnum[SeqEnum[RngIntElt]]
+  {Compute all classes in J(Q)/modulus*J(Q) whose image mod p
+  contains the image of an Fp-point on the curve.
+  J is assumed to have rank=genus=2.}
+  // TODO: generalize to several primes and higher genus
+
   C := Curve(J);
   Cp := BaseChange(C, Bang(Rationals(), GF(p)));
   Jp := BaseChange(J, GF(p));
@@ -108,11 +111,17 @@ function prerun_mwsieve_g2r2(J, bas, base_pt, modulus, p, modp_points : printlev
   printf "  %o cosets eliminated at v = %o\n", modulus^2 - #coeffs, p;
   return coeffs;
 
-end function;
+end intrinsic;
 
 
-function MWSieve(J, sieving_primes, modulus, bas, base_pt, fake_coeffs : GIlb := 2, SmoothBound := 10000, satknown := {Integers()|}, excluded := {Integers()|}, satunknown := {Integers() | }, known_rat_coeffs := {}, bool_list := [true : i in [1..#fake_coeffs]], unsat := {Integers()|}, special_p_points := [], printlevel := 0) 
-
+intrinsic MWSieve(J::JacHyp, sieving_primes::SeqEnum[RngIntElt], modulus::RngIntElt, bas::SeqEnum[JacHypPt],
+                  base_pt::PtHyp, fake_coeffs::SeqEnum[SeqEnum[RngIntElt]] :
+                  GIlb := 2, SmoothBound := 10000, satknown := {Integers()|}, excluded := {Integers()|},
+                  satunknown := {Integers() | }, known_rat_coeffs := {}, bool_list := [true : i in [1..#fake_coeffs]],
+                  unsat := {Integers()|}, special_p_points := [], printlevel := 0) 
+  -> BoolElt, SeqEnum[BoolElt], SetEnum[RngIntElt], SetEnum[RngIntElt], SeqEnum[SeqEnum[RngIntElt]]
+  {Implementation of the Mordell-Weil sieve based on an earlier Magma version of the Mordell-Weil sieve due to
+  Michael Stoll, adapted for use in combination with quadratic Chabauty.}
   bp := Seqset(BadPrimes(J)) join {p : p in excluded};
   lb := Max(3, IsEven(GIlb) select GIlb+1 else GIlb);
   C := Curve(J);
@@ -197,10 +206,12 @@ function MWSieve(J, sieving_primes, modulus, bas, base_pt, fake_coeffs : GIlb :=
   end for; // p
   return false, bool_list, satknown, satunknown, 
     [fake_coeffs[i] : i in [1..    #fake_coeffs] | bool_list[i]];
-end function;
+end intrinsic;
 
 
-function coeffs_CRT(coeffs, primes, exponents)
+intrinsic coeffs_CRT(coeffs::SeqEnum[SeqEnum[SeqEnum[SeqEnum[RngIntElt]]]], primes::SeqEnum[RngIntElt], exponents::SeqEnum[RngIntElt])
+  -> SeqEnum[SeqEnum[RngIntElt]]
+  {Apply CRT to coeffs}
   // TODO: Rewrite this and make it work in general. 
     assert #primes eq #exponents;
     assert #coeffs eq #primes;
@@ -267,7 +278,7 @@ function coeffs_CRT(coeffs, primes, exponents)
         end for;
     end if;
     return coeffs_mod_M;
-end function;
+end intrinsic;
 
 function all_coeffs(N, g)
     // return all lists a = [a_1,...,a_g], where a_i = 0,...,N-1
@@ -286,7 +297,9 @@ end function;
 
 
 
-function combine_fake_good(fake_coeffs_mod_M, M, N)
+intrinsic combine_fake_good(fake_coeffs_mod_M::SeqEnum[SeqEnum[RngIntElt]], M::RngIntElt, N::RngIntElt)
+  -> SeqEnum[SeqEnum[RngIntElt]]
+  {}
     // fake_as_mod_M contains all solutions mod M.
     // N is a prime power for which we have no information where 
     // the rational points could lie.
@@ -300,7 +313,7 @@ function combine_fake_good(fake_coeffs_mod_M, M, N)
         end for;
     end for;
     return as;
-end function;
+end intrinsic;
 
 
 

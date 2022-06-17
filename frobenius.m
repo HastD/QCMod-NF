@@ -10,16 +10,17 @@ import "froblift.m": frobenius, getrings, radix_reduce, reduce_mod_Q;
 import "reductions.m": change_basis_b0binf, convert_to_Qxzzinvd, reduce_with_fs;
 import "misc.m": compute_F, eval_R, fun_field, Qxzzinvd_to_R;
 
-Qx<x>:=PolynomialRing(RationalField());
 
 // July 21: JSM/JB added precision estimates
 // 17/04/20: tried to extend this to allow for slightly worse singularities (in Tuitman's notation e.g. the denominators of the entries of W0 not being divisible by r). Not sure that it's worked.
 
 // 16/04/20: To get this to work when the model is not smooth, we have to change how we compute basisR, phiomega, phiomegaZf and g0omega (which were originally written assuming that b^0 = [1,y,...,y^(d-1)] or equivalently that W0 is the identity. This just involves selectively multiplying by W0 or its inverse. This also means we have to do some additional reductions (i.e. quotient out by z=r/LeadingCoefficient(r). This is done using radix_reduce.
 
-frob_struc:=function(data,Z,eta,bpt : N:=0)
+intrinsic FrobeniusStructure(data::Rec, Z::Mtrx, eta::ModTupRngElt, bpt::SeqEnum[FldRatElt] : N:=0)
+  -> Mtrx, RngIntElt
+  {Compute the matrix G of the (inverse) Frobenius structure on A_Z.}
 
-  // Compute the matrix G of the (inverse) Frobenius structure on A_Z.
+  Qx<x>:=PolynomialRing(RationalField());
 
   Q:=data`Q; p:=data`p; g:=data`g; W0:=data`W0; Winf:=data`Winf; f0list:=data`f0list; finflist:=data`finflist; fendlist:=data`fendlist; 
   FH1U:=data`F; Nmax:=data`Nmax; basis:=data`basis; G0:=data`G0; Ginf:=data`Ginf; red_list_fin:=data`red_list_fin; red_list_inf:=data`red_list_inf; 
@@ -242,5 +243,5 @@ frob_struc:=function(data,Z,eta,bpt : N:=0)
   f2 := Floor(log(p, minf*data`einf)); // Tui17, Prop 3.8
 
   return G, N - Max(f1, f2);
-end function;
+end intrinsic;
 

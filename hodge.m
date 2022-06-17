@@ -6,11 +6,11 @@ freeze;
 
 import "misc.m": fun_field;
 
-hodge_data:=function(data,Z,bpt: prec := 5)
-
-  // Compute the 1-form eta, as a vector of coefficients
-  // w.r.t. basis[i] for i=2g+1,...,2g+k-1 where k is the 
-  // number of points lying over x=infinity.
+intrinsic HodgeData(data::Rec, Z::Mtrx, bpt::PlcFunElt : prec := 5)
+  -> ModTupRngElt, ModTupRngElt, ModTupRngElt, RngIntElt
+  {Compute the 1-form eta, as a vector of coefficients
+  w.r.t. basis[i] for i=2g+1,...,2g+k-1 where k is the 
+  number of points lying over x=infinity.}
   // prec is the relative precision to be used for the expansions
   // To do: We don't want to work over the splitting field!
 
@@ -268,4 +268,4 @@ hodge_data:=function(data,Z,bpt: prec := 5)
 
   return Vector(eta),Vector(beta),Vector(gamma),Integers()!poleorder_Omegax;
 
-end function;
+end intrinsic;
