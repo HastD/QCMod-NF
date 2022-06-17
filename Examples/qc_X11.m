@@ -1,10 +1,16 @@
 SetLogFile("qc_X11.log");
-load "qc_init_g2.m";
-load "qc_modular.m";
-load "divisor_heights.m";
-load "howe_zhu.m";
-P<x> := PolynomialRing(Rationals());
- 
+AttachSpec("QCMod.spec");
+
+import "singleintegrals.m": set_point;
+import "misc.m": coefficients_mod_pN;
+import "symplectic_basis.m": cup_product_matrix;
+import "heights.m": height_coefficients;
+import "qc_init_g2.m": generators, height_init_g2, rationalize;
+
+
+Qx<x> := PolynomialRing(Rationals());
+Qxy<y> := PolynomialRing(Qx);
+
 g11 :=  x^3 + x + 1; 
 h11 := 6*x^6 + 5*x^5 + 12*x^4 + 12*x^3 + 6*x^2 + 12*x - 4;
  

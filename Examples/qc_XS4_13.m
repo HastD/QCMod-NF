@@ -1,5 +1,10 @@
 SetLogFile("qc_XS4_13.log");
-load "qc_modular.m";
+AttachSpec("QCMod.spec");
+
+import "second_patch_quartic.m": curve, second_affine_patch;
+
+Qx<x> := PolynomialRing(RationalField());
+Qxy<y> := PolynomialRing(Qx);
 
 // We use the model of X_S4(13) found by Banwait-Cremona in `Tetrahedral elliptic curves
 // and the local-global principle for isogenies`. Algebra & Number Theory, 8(5):1201–1229, 2014

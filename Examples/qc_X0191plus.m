@@ -1,9 +1,15 @@
 SetLogFile("qc_X0191plus.log");
-load "qc_init_g2.m";
-load "qc_modular.m";
-load "divisor_heights.m";
-load "howe_zhu.m";
-_<x> := PolynomialRing(Rationals());
+
+AttachSpec("QCMod.spec");
+
+import "singleintegrals.m": coleman_data, set_point;
+import "misc.m": coefficients_mod_pN;
+import "symplectic_basis.m": cup_product_matrix;
+import "heights.m": height_coefficients;
+import "qc_init_g2.m": generators, height_init_g2, rationalize;
+
+Qx<x> := PolynomialRing(Rationals());
+Qxy<y> := PolynomialRing(Qx);
 
 f191 := x^6 + 2*x^4 + 2*x^3 + 5*x^2 - 6*x + 1;
 
@@ -44,7 +50,7 @@ exponents := [2];
 p := primes[1];
 S0 := CuspidalSubspace(ModularSymbols(191, 2)); 
 S := AtkinLehnerSubspace(S0, 191, 1);
-assert hecke_operator_generates(S, 31);
+assert HeckeOperatorGenerates(S, 31);
 
 fake_coeffs := [];
 base_pt := [ptsX[1,1]/ptsX[1,3], ptsX[1,2]/ptsX[1,3]^(gX+1)]; 

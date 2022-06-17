@@ -1,10 +1,15 @@
 SetLogFile("qc_X0167plus.log");
-load "qc_modular.m";
-load "divisor_heights.m";
-load "qc_init_g2.m";
-load "howe_zhu.m";
-_<x> := PolynomialRing(Rationals());
- 
+
+AttachSpec("QCMod.spec");
+
+import "singleintegrals.m": coleman_data, set_point;
+import "misc.m": coefficients_mod_pN;
+import "symplectic_basis.m": cup_product_matrix;
+import "heights.m": height_coefficients;
+import "qc_init_g2.m": generators, height_init_g2, rationalize;
+
+Qx<x> := PolynomialRing(Rationals());
+Qxy<y> := PolynomialRing(Qx);
 
 f167 := x^6 - 4*x^5 + 2*x^4 - 2*x^3 - 3*x^2 + 2*x - 3;
 X := HyperellipticCurve(f167); 
@@ -38,7 +43,7 @@ exponents := [3];
 p := primes[1];
 S0 := CuspidalSubspace(ModularSymbols(167, 2)); 
 S := AtkinLehnerSubspace(S0, 167, 1);
-assert hecke_operator_generates(S, p);
+assert HeckeOperatorGenerates(S, p);
 
 // First compute local heights of representatives for generators of J(Q) tensor Q at p. 
 

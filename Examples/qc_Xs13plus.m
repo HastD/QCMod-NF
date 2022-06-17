@@ -3,7 +3,6 @@ AttachSpec("QCMod.spec");
 
 import "auxpolys.m": auxpolys;
 import "coho.m": reduce_mod_Q_exact;
-import "misc.m": rank_J0Nplus;
 
 // X_s(13)+ is isomorphic to X0(169)+ (and to X_ns(13)+)
 level := 169;
