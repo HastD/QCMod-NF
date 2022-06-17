@@ -1,4 +1,6 @@
-load "coleman.m";
+AttachSpec("coleman.spec");
+
+import "singleintegrals.m": coleman_data, coleman_integrals_on_basis, set_point, set_bad_point, tiny_integrals_on_basis;
 
 
 // These are tests for the Coleman integration code, not quadratic Chabauty
@@ -8,6 +10,8 @@ print "//////////////////////////";
 print "// 1. An elliptic curve //";
 print "//////////////////////////\n";
 
+Qx<x> := PolynomialRing(RationalField());
+Qxy<y> := PolynomialRing(Qx);
 Q:=y^2-(x^3-10*x+9);
 p:=5;
 N:=10;

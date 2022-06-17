@@ -1,4 +1,5 @@
-
+Qx<x> := PolynomialRing(RationalField());
+Qxy<y> := PolynomialRing(Qx);
 
 f67  := x^6 + 2*x^5 +   x^4 - 2*x^3 + 2*x^2 - 4*x + 1; 
 f73  := x^6 + 2*x^5 +   x^4 + 6*x^3 + 2*x^2 - 4*x + 1; 
