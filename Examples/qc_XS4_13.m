@@ -1,8 +1,6 @@
 SetLogFile("qc_XS4_13.log");
 AttachSpec("QCMod.spec");
 
-import "second_patch_quartic.m": curve, second_affine_patch;
-
 Qx<x> := PolynomialRing(RationalField());
 Qxy<y> := PolynomialRing(Qx);
 
@@ -14,10 +12,10 @@ Q_S4 := 4*x^3*y - x^3- 3*x^2*y^2 + 16*x^2*y+ 3*x^2+ 3*x*y^3 - 11*x*y^2+ 9*x*y+x+
 // the analogous results in qc_Xs13plus.m
 //
 
-// Find a good affine covering. For this, we apply second_affine_patch twice.
-p := 11; 
-Q := second_affine_patch(Q_S4, p );
-Q_inf, A := second_affine_patch(Q, p );
+// Find a good affine covering. For this, we apply SecondAffinePatch twice.
+p := 11;
+Q := SecondAffinePatch(Q_S4, p );
+Q_inf, A := SecondAffinePatch(Q, p );
 good_pts1, bool1, bad_pts1, _, _, bad_disks_1 := 
                             QCModAffine(Q, p : N := 15, printlevel := 0);
 
@@ -29,10 +27,10 @@ assert bool1 and bool2;
 good_pts1;
 "Good affine points on second patch",
 good_pts2;
-C, Qxy := curve(Q);
+C, Qxy := CurveFromBivariate(Q);
 P2 := Ambient(C);
 X := P2.1; Y := P2.2; Z := P2.3;
-C_inf := curve(Q_inf);
+C_inf := CurveFromBivariate(Q_inf);
 a,b,c,d := Explode(A);
 C1 := Curve(P2, Evaluate(Equation(C), [a*X+Z+b*Y, Y, c*Z+X+d*Y]));
 pi1 := map<C1 -> C | [a*X+Z+b*Y, Y, c*Z+X+d*Y]>;

@@ -8,7 +8,6 @@ import "singleintegrals.m": coleman_data, evalf0, h1_basis, is_bad, local_coord,
 import "misc.m": are_congruent, equivariant_splitting, eval_mat_R, eval_Q, FindQpointQp, fun_field, lindepQp, minprec, minval, minvalp;
 import "applications.m": Q_points, Qp_points, roots_with_prec, separate;
 import "heights.m": E1_tensor_E2, expand_algebraic_function, frob_equiv_iso, height, parallel_transport, parallel_transport_to_z;
-import "second_patch_quartic.m": curve, second_affine_patch;
 
 Qx<x>:=PolynomialRing(RationalField());
 Qxy<y>:=PolynomialRing(Qx);
@@ -890,13 +889,11 @@ intrinsic QCModQuartic(Q::RngUPolElt[RngUPol], S::ModSym :
   {Takes an integer polynomial defining an affine patch of a smooth plane quartic and outputs the rational points.}
   // S is a space of cusp forms
   // Q is a polynomial in (QQ[x])[y] of total degree 4
-  if LeadingCoefficient(Q) ne 1 then 
-    error "Need a monic model in y"; 
-    // TODO: 
-    // - Automatically compute a Tuitman model that contains enough rational points 
-  end if;
-  C, Qxy := curve(Q);
-  assert Degree(Qxy) eq 4;
+  require LeadingCoefficient(Q) eq 1: "Need a monic model in y"; 
+  // TODO: 
+  // - Automatically compute a Tuitman model that contains enough rational points 
+  C, Qxy := CurveFromBivariate(Q);
+  require Degree(Qxy) eq 4: "Curve must be quartic";
   P2 := Ambient(C);
   X := P2.1; Y := P2.2; Z := P2.3;
   pl := printlevel;
@@ -915,7 +912,7 @@ intrinsic QCModQuartic(Q::RngUPolElt[RngUPol], S::ModSym :
         printf "\n Find a good second affine patch\n"; // so that the lift of Frobenius is defined for every point on at least one affine patch.";
       end if;
       try
-        Q_inf, A := second_affine_patch(Q, p : printlevel := printlevel, bd := 4, max_inf_deg := max_inf_deg);
+        Q_inf, A := SecondAffinePatch(Q, p : printlevel := printlevel, bd := 4, max_inf_deg := max_inf_deg);
       catch e
         if pl gt 0 then 
         printf "\n Error at p = %o: %o\n", p, e; end if;
@@ -944,7 +941,7 @@ intrinsic QCModQuartic(Q::RngUPolElt[RngUPol], S::ModSym :
         continue;
       end try;
 
-      C_inf := curve(Q_inf);
+      C_inf := CurveFromBivariate(Q_inf);
       a,b,c,d := Explode(A);
       C1 := Curve(P2, Evaluate(Equation(C), [a*X+Z+b*Y, Y, c*Z+X+d*Y]));
       pi1 := map<C1 -> C | [a*X+Z+b*Y, Y, c*Z+X+d*Y]>;

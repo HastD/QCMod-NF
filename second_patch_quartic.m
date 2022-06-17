@@ -7,8 +7,9 @@ freeze;
 
 import "misc.m": function_field;
 
-function curve(Q)
-  // given a bivariate polynomial in K[x][y], construct the curve Q = 0
+intrinsic CurveFromBivariate(Q::RngUPolElt[RngUPol])
+  -> CrvPln, RngMPolElt
+  {Given a bivariate polynomial in K[x][y], construct the curve Q = 0.}
   K := BaseRing(BaseRing(Q));
   PK3<X,Y,Z>:=PolynomialRing(K,3);                         
   Q_dehom:=PK3!0;
@@ -22,10 +23,10 @@ function curve(Q)
   P2<X1,Y1,Z1> := ProjectiveSpace(K, 2);
   C_Q := Curve(P2,Q_hom);
   return C_Q, Q_dehom;
-end function;
+end intrinsic;
 
 function small_rat_pts(Q)
-  C := curve(Q);
+  C := CurveFromBivariate(Q);
   C_rat_pts := Points(C:Bound:=100);
   rat_pts := [];
   for P in C_rat_pts do
@@ -134,7 +135,12 @@ function second_affine_patch_modp(Q, p, A, rat_pts : printlevel := 0)
   return done, A;
 end function;
 
-function second_affine_patch(Q, p : printlevel := 0, bd:=p-1, max_inf_deg := 0)
+intrinsic SecondAffinePatch(Q::RngUPolElt[RngUPol], p::RngIntElt :
+                            printlevel := 0, bd:=p-1, max_inf_deg := 0)
+  -> RngUPolElt[RngUPol], SeqEnum[RngElt]
+  {Given an affine patch of a smooth plane quartic, finds a second patch so that running quadratic
+  Chabauty on both suffices to provably find the rational points on the projective model.}
+
   pl := printlevel;
   y := Parent(Q).1;
   x := BaseRing(Parent(Q)).1;
@@ -240,4 +246,4 @@ function second_affine_patch(Q, p : printlevel := 0, bd:=p-1, max_inf_deg := 0)
     
   return min_ht_Q_trans, min_A;
 
-end function;
+end intrinsic;
