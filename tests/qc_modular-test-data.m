@@ -22,6 +22,36 @@ test_format := recformat<Q,level,p,N,prec,r,Delta,s,h1basis,g,rho,W0,cpm_prec,cp
                     local_height_lists,E1_E2_lists,E1_lists,E2_lists,Nexpansions,height_coeffs,Nhtcoeffs,
                     Pps, xts, bts, zeroes_lists, sols_lists, fake_rat_pts, good_affine_rat_pts_xy_final>;
 
+function pseries_str(P)
+  if IsZero(P) then
+    return "0";
+  else
+    return Sprintf("elt< %m | %m, %m, %m >", Parent(P), Valuation(P), Eltseq(P), Precision(Parent(P)) - Valuation(P));
+  end if;
+end function;
+
+function matrix_pseries_str(M)
+  if IsZero(M) then
+    return "0";
+  else
+    s := Sprintf("%m!%m", Parent(M), [pseries_str(P) : P in Eltseq(M)]);
+    s2 := ReplaceCharacter(s, "\"", "");
+    return ReplaceString(s2, "Strings()", Sprintf("%m", BaseRing(M)));
+  end if;
+end function;
+
+function res_poly_pseries_str(P)
+  if IsZero(P) then
+    return "0";
+  else
+    R := PreimageRing(Parent(P));
+    poly := R!P;
+    s := Sprintf("%m!%m", R, [pseries_str(ser) : ser in Eltseq(poly)]);
+    s2 := ReplaceCharacter(s, "\"", "");
+    return ReplaceString(s2, "Strings()", Sprintf("%m", BaseRing(R)));
+  end if;
+end function;
+
 Qx<x>:=PolynomialRing(RationalField());
 Qxy<y>:=PolynomialRing(Qx);
 
@@ -409,7 +439,7 @@ function QCModAffine_test_data(Q, p :
       PhiAZb_to_z[i] := G_list[i] eq 0 select 0 else
         parallel_transport_to_z(Qppoints[i],Z,eta,data:prec:=prec,N:=Nhodge)*PhiAZb[i]; 
     end for;
-    Append(~test`PhiAZb_to_z, PhiAZb_to_z);
+    Append(~test`PhiAZb_to_z, [* matrix_pseries_str(M) : M in PhiAZb_to_z *]);
 
     gammafil_listb_to_z := [* 0 : k in [1..numberofpoints] *]; // evaluations of gammafil at local coordinates for all points 
     if pl gt 2 then printf  "Computing expansions of the filtration-respecting function gamma_fil.\n"; end if;
@@ -546,8 +576,11 @@ function QCModAffine_test_data(Q, p :
 
   end for; // l := 1 to number_of_correspondences 
 
-  test`local_height_lists := local_height_lists; test`E1_E2_lists := E1_E2_lists; test`E1_lists := E1_lists;
-  test`E2_lists := E2_lists; test`Nexpansions := Nexpansions;
+  test`local_height_lists := [* [* pseries_str(ser) : ser in l *] : l in local_height_lists *];
+  test`E1_E2_lists := [* [* res_poly_pseries_str(ser) : ser in l *] : l in E1_E2_lists *];
+  test`E1_lists := [* [* pseries_str(ser) : ser in l *] : l in E1_lists *];
+  test`E2_lists := [* [* pseries_str(ser) : ser in l *] : l in E2_lists *];
+  test`Nexpansions := Nexpansions;
 
   if #height_coeffs eq 0 and #heights lt g then
     error "Not enough rational points on the curve!"; // to span the symmetric square of the Mordell-Weil group";
@@ -573,7 +606,7 @@ function QCModAffine_test_data(Q, p :
 
 
   // Find expansion of the quadratic Chabauty function
-  test`Pps := [**]; test`xts := [**]; test`bts := [**];
+  test`Pps := []; test`xts := []; test`bts := [];
   for k := 1 to number_of_correspondences do
 
     F_list := [**];
@@ -648,7 +681,9 @@ function QCModAffine_test_data(Q, p :
         Pp := Qppoints[i];
         // find affine local coordinates 
         xt, bt := local_coord(Pp,prec,data);
-        Append(~test`Pps, Pp); Append(~test`xts, xt); Append(~test`bts, bt);
+        Append(~test`Pps, Pp);
+        Append(~test`xts, pseries_str(xt));
+        Append(~test`bts, [pseries_str(ser) : ser in bt]);
         W0invxt := Evaluate(W0^(-1), xt);
         b_vector := Matrix(Parent(xt), Degree(Q), 1, bt);
         yt := &+[W0invxt[2,j]*b_vector[j,1] : j in [1..Degree(Q)]];
@@ -968,6 +1003,11 @@ function QCModQuartic_test_data(Q, S :
 end function;
 
 test_data_list := [* *];
+output_file := "tests/quartic-test-data.m";
+fprintf output_file, "test_format := %m;\n\ntest_data_list := [* *];\n\n", test_format;
+fprintf output_file, "O := function(n)\n  return BigO(pAdicField(Factorization(n)[1][1])!n);\nend function;\n\n";
+
+j := 1;
 for i := 2 to #x0plus_quartics_list do
   Q := x0plus_quartics_list[i];
   level := levels_quartics_list[i];
@@ -981,7 +1021,13 @@ for i := 2 to #x0plus_quartics_list do
   test_data_inf`level := level;
   Append(~test_data_list, test_data);
   Append(~test_data_list, test_data_inf);
+  out := Sprintf("test_data_list[%o] := %m;\n\ntest_data_list[%o] := %m;\n\n", j, test_data, j+1, test_data_inf);
+  out := ReplaceString(out, "\n ! Matrix", "\n Matrix"); // hack to handle bug in Magma string formatting
+  Write(output_file, out);
   //break;
-  fprintf "tests/quartic-test-data.m", "%m;\n\n", test_data;
-  fprintf "tests/quartic-test-data.m", "%m;\n\n", test_data_inf;
 end for;
+
+// Hack to make Magma interpret recorded p-adic integers properly
+O := function(n)
+  return BigO(pAdicField(Factorization(n)[1][1])!n);
+end function;
