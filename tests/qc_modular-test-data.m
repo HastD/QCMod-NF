@@ -958,24 +958,24 @@ function QCModQuartic_test_data(Q, S :
       if pl gt 0 then 
         printf "\n Starting quadratic Chabauty computation for the affine patch \n %o = 0\n at the prime p = %o\n\n", Q, p;
       end if;
-      // try 
+      try 
         good_pts1, bool1, bad_pts1, data1, fake_pts1, bad_disks1, test_data1 := QCModAffine_test_data(Q, p : number_of_correspondences := number_of_correspondences, printlevel := printlevel, debug := debug, base_point := base_point, N:=N, prec:=prec);
         if not bool1 then  "non-rational common roots (remove this message)"; continue; end if;
-      // catch e
-        // if pl gt 1 then printf "\n Error in qc computation at p = %o:\n %o \n",p, e; end if;
-      //   continue;
-      // end try;
-      // try
+      catch e
+        if pl gt 1 then printf "\n Error in qc computation at p = %o:\n %o \n",p, e; end if;
+        continue;
+      end try;
+      try
         if pl gt 0 then 
           printf "\n Starting quadratic Chabauty computation for the affine patch \n %o = 0\n at the prime p = %o\n\n", Q_inf, p;
         end if;
         good_pts2, bool2, bad_pts2, data2, fake_pts2, bad_disks2, test_data2 := QCModAffine_test_data(Q_inf, p : number_of_correspondences := number_of_correspondences, printlevel := printlevel, debug := debug, N:=N, prec:=prec);
         if not bool2 then "non-rational common roots"; continue; end if;
-      // catch e
-        // if pl gt 0 then printf "\n Error in qc computation at p = %o\n", p; end if;
-        // if pl gt 1 then e; end if;
-      //   continue;
-      // end try;
+      catch e
+        if pl gt 0 then printf "\n Error in qc computation at p = %o\n", p; end if;
+        if pl gt 1 then e; end if;
+        continue;
+      end try;
 
       C_inf := CurveFromBivariate(Q_inf);
       a,b,c,d := Explode(A);
@@ -1004,11 +1004,13 @@ end function;
 
 test_data_list := [* *];
 output_file := "tests/quartic-test-data.m";
-fprintf output_file, "test_format := %m;\n\ntest_data_list := [* *];\n\n", test_format;
-fprintf output_file, "O := function(n)\n  return BigO(pAdicField(Factorization(n)[1][1])!n);\nend function;\n\n";
+if not OpenTest(output_file, "r") then
+  fprintf output_file, "test_format := %m;\n\ntest_data_list := [* *];\n\n", test_format;
+  fprintf output_file, "O := function(n)\n  return BigO(pAdicField(Factorization(n)[1][1])!n);\nend function;\n\n";
+end if;
 
 j := 1;
-for i := 2 to #x0plus_quartics_list do
+for i := 1 to #x0plus_quartics_list do
   Q := x0plus_quartics_list[i];
   level := levels_quartics_list[i];
   S0 := CuspidalSubspace(ModularSymbols(level, 2)); 
@@ -1024,7 +1026,7 @@ for i := 2 to #x0plus_quartics_list do
   out := Sprintf("test_data_list[%o] := %m;\n\ntest_data_list[%o] := %m;\n\n", j, test_data, j+1, test_data_inf);
   out := ReplaceString(out, "\n ! Matrix", "\n Matrix"); // hack to handle bug in Magma string formatting
   Write(output_file, out);
-  //break;
+  j +:= 2;
 end for;
 
 // Hack to make Magma interpret recorded p-adic integers properly
