@@ -1,47 +1,27 @@
 freeze;
 
 mat_W0:=function(Q)
-
   // Compute the matrix W0 using MaximalOrderFinite
-
-  Qt:=RationalFunctionField(RationalField());
-  K:=ext<Qt|Q>;
-  b0:=Basis(MaximalOrderFinite(K));
-  d:=Degree(Q);
-  mat:=ZeroMatrix(Qt,d,d);
-  for i:=1 to d do
-    for j:=1 to d do
-      mat[i,j]:=Eltseq(K!b0[i])[j];
-    end for;
-  end for;
-  return mat;
-
+  K := BaseRing(BaseRing(Parent(Q)));
+  Kt := RationalFunctionField(K);
+  L := ext<Kt|Q>;
+  b0 := Basis(MaximalOrderFinite(L));
+  d := Degree(Q);
+  return Matrix(Kt, d, d, [[Eltseq(L!b0[i])[j] : j in [1..d]] : i in [1..d]]);
 end function;
 
-
 mat_Winf:=function(Q);
-
   // Compute the matrix Winf using MaximalOrderFinite
-
-  Qt:=RationalFunctionField(RationalField());
-  Qty:=PolynomialRing(Qt);
-  Qnew:=Qty!0;
-  C:=Coefficients(Q);
-  for i:=1 to #C do
-    Qnew:=Qnew+Evaluate(C[i],1/Qt.1)*Qty.1^(i-1);
-  end for;
-  Q:=Qnew;
-  K:=ext<Qt|Q>;
-  binf:=Basis(MaximalOrderFinite(K));
-  d:=Degree(Q);
-  mat:=ZeroMatrix(Qt,d,d);
-  for i:=1 to d do
-    for j:=1 to d do
-      mat[i,j]:=Eltseq(K!binf[i])[j];
-    end for;
-  end for;
-  return Evaluate(mat,1/Qt.1);
-
+  K := BaseRing(BaseRing(Parent(Q)));
+  Kt := RationalFunctionField(K);
+  Kty := PolynomialRing(Kt);
+  C := Coefficients(Q);
+  Qnew := &+[Evaluate(C[i], 1/Kt.1)*Kty.1^(i-1) : i in [1..#C]];
+  L := ext<Kt|Qnew>;
+  binf := Basis(MaximalOrderFinite(L));
+  d := Degree(Qnew);
+  mat := Matrix(Kt, d, d, [[Eltseq(L!binf[i])[j] : j in [1..d]] : i in [1..d]]);
+  return Evaluate(mat, 1/Kt.1);
 end function;
 
 
