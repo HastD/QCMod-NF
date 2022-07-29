@@ -1,5 +1,5 @@
 AttachSpec("QCMod.spec");
-load "tests/quartic-test-data.m";
+load "data/quartic-test-data.m";
 
 for test in test_data_list do
   printf "Building Coleman data for Q = %o...\n", test`Q;

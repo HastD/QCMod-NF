@@ -1,18 +1,18 @@
 AttachSpec("coleman.spec");
 import "auxpolys.m" : auxpolys;
-load "tests/quartic-test-data.m";
+load "data/short-coleman-test-data.m";
 
-for test in test_data_list do
-  Q := test`Q;
+for data in short_coleman_data_list do
+  Q := data`Q;
   r, Delta, s := auxpolys(Q);
   // check equations
   assert Delta eq Discriminant(Q);
   assert r eq Delta/GCD(Delta, Derivative(Delta));
   assert IsZero((s*Derivative(Q) - Delta) mod Q);
   // check against recorded values
-  assert r eq test`r;
-  assert Delta eq test`Delta;
-  assert s eq test`s;
+  assert r eq data`r;
+  assert Delta eq data`Delta;
+  assert s eq data`s;
   printf "auxpolys(Q) gives expected output for Q = %o.\n", Q;
 end for;
 
