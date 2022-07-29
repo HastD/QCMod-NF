@@ -7,10 +7,12 @@ auxpolys:=function(Q);
   Delta:=Discriminant(Q); 
   r:=Numerator(Delta/GCD(Delta,Derivative(Delta)));
 
-  Qx<x>:=RationalFunctionField(RationalField());
-  Qxy<y>:=PolynomialRing(Qx);
+  K := BaseRing(BaseRing(Parent(Q)));
+  Kx<x>:=RationalFunctionField(K);
+  Kxy<y>:=PolynomialRing(Kx);
   d:=Degree(Q);
-  Syl:=ZeroMatrix(Qx,2*d-1,2*d-1);
+  // Syl is (the transpose of) the Sylvester matrix for f, df/dy
+  Syl:=ZeroMatrix(Kx,2*d-1,2*d-1);
   coefs1:=Reverse(Coefficients(Q));
   coefs2:=Reverse(Coefficients(Derivative(Q)));
   for i:=1 to d-1 do
@@ -24,12 +26,12 @@ auxpolys:=function(Q);
     end for;
   end for;
 
-  v:=[Qx|];
+  v:=[Kx|];
   for i:=1 to 2*d-2 do
     v[i]:=0;
   end for;
   v[2*d-1]:=Delta; 
-  M:=RModule(Qx,2*d-1);
+  M:=RModule(Kx,2*d-1);
   sol:=Solution(Syl,M!v);
   
   com_fac:=Delta;
