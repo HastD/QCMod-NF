@@ -7,7 +7,7 @@ auxpolys:=function(Q);
   Delta:=Discriminant(Q); 
   r:=Numerator(Delta/GCD(Delta,Derivative(Delta)));
 
-  K := BaseRing(BaseRing(Parent(Q)));
+  K := BaseRing(BaseRing(Q));
   Kx<x>:=RationalFunctionField(K);
   Kxy<y>:=PolynomialRing(Kx);
   d:=Degree(Q);
@@ -53,11 +53,18 @@ auxpolys:=function(Q);
   return BaseRing(Parent(Q))!r,BaseRing(Parent(Q))!Delta,Parent(Q)!s;
 end function;
 
-genus:=function(Q,p)
-
+function genus(Q,p)
   // Computes the genus of the smooth projective curve defined by Q
-
-  Fp:=FiniteField(p);
+  K := BaseRing(BaseRing(Q));
+  if IsCoercible(K, p) then
+    p := p*Integers(K);
+  end if;
+  if not IsPrime(p) then
+    genera := [genus(Q, pri[1]) : pri in Factorization(p)];
+    assert &and[g eq genera[1] : g in genera];
+    return genera[1];
+  end if;
+  Fp,res:=ResidueClassField(p);
   A2:=AffineSpace(Fp,2);
   Fpxy:=CoordinateRing(A2);
   Qmodp:=Fpxy!0;
@@ -65,28 +72,29 @@ genus:=function(Q,p)
   for i:=1 to #C do
     D:=Coefficients(C[i]);
     for j:=1 to #D do
-        Qmodp:=Qmodp+(Fp!D[j])*Fpxy.1^(j-1)*Fpxy.2^(i-1);
+        Qmodp+:=res(D[j])*Fpxy.1^(j-1)*Fpxy.2^(i-1);
     end for;
   end for;
   if not IsIrreducible(Qmodp) then
     error "bad prime";
   end if;
-  g:=Genus(Curve(Scheme(A2,Qmodp)));
+  g:=Genus(Curve(A2,Qmodp));
   return g;  
 end function;
 
-smooth:=function(f,p)
-
+function smooth(f,p)
   // Is f mod p separable?
-
-  Fp:=FiniteField(p);
-  Fpx:=PolynomialRing(Fp);
-  
-  if Degree(Fpx!f) eq Degree(f) and IsSeparable(Fpx!f) then
-    return true;
-  else
-    return false;
+  K := BaseRing(f);
+  if IsCoercible(K, p) then
+    p := p*Integers(K);
   end if;
+  if not IsPrime(p) then
+    return &and[smooth(f, pri[1]) : pri in Factorization(p)];
+  end if;
+  Fp,res:=ResidueClassField(p);
+  Fpx:=PolynomialRing(Fp);
+  fmodp := &+[res(Coefficient(f, i))*Fpx.1^i : i in [0 .. Degree(f)]];
+  return (Degree(fmodp) eq Degree(f) and IsSeparable(fmodp));
 end function;
 
 log:=function(p,x)
@@ -97,14 +105,23 @@ log:=function(p,x)
   end if;
 end function;
 
-is_integral:=function(A,p)
-
+function is_integral(A,p)
   // Is the matrix A p-adically integral?
-
+  K := BaseRing(BaseRing(A));
+  if IsCoercible(K, p) then
+    p := p*Integers(K);
+  end if;
+  if not IsPrime(p) then
+    return &and[is_integral(A, pri[1]) : pri in Factorization(p)];
+  end if;
   A:=A*Denominator(A);
   for i:=1 to NumberOfRows(A) do
     for j:=1 to NumberOfColumns(A) do
       if A[i,j] ne 0 then
+        coeffs := Coefficients(Numerator(A[i,j]));
+        if K eq Rationals() then
+          ChangeUniverse(~coeffs, RationalsAsNumberField());
+        end if;
         m:=Minimum([Valuation(x,p) : x in Coefficients(Numerator(A[i,j]))]);
         if m lt 0 then
           return false;
