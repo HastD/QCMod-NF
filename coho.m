@@ -2,7 +2,7 @@ freeze;
 
 mat_W0:=function(Q)
   // Compute the matrix W0 using MaximalOrderFinite
-  K := BaseRing(BaseRing(Parent(Q)));
+  K := BaseRing(BaseRing(Q));
   Kt := RationalFunctionField(K);
   L := ext<Kt|Q>;
   b0 := Basis(MaximalOrderFinite(L));
@@ -12,7 +12,7 @@ end function;
 
 mat_Winf:=function(Q);
   // Compute the matrix Winf using MaximalOrderFinite
-  K := BaseRing(BaseRing(Parent(Q)));
+  K := BaseRing(BaseRing(Q));
   Kt := RationalFunctionField(K);
   Kty := PolynomialRing(Kt);
   C := Coefficients(Q);
@@ -66,7 +66,7 @@ reduce_mod_Q_exact:=function(f,Q)
   // Eliminate powers of y >= d_x.
 
   while Degree(f) gt Degree(Q)-1 do
-    f:=f-LeadingCoefficient(f)*(Parent(f).1)^(Degree(f)-Degree(Q))*Q;
+    f -:= LeadingCoefficient(f)*(Parent(f).1)^(Degree(f)-Degree(Q))*Q;
   end while;
   return f;
 end function;
@@ -82,12 +82,15 @@ polys_to_vec:=function(polys,degx);
   for i:=1 to #polys do
     for j:=0 to degx do
       v[cnt]:=Coefficient(polys[i],j);
-      cnt:=cnt+1;
+      cnt +:= 1;
     end for;
   end for;
-
-  V:=VectorSpace(RationalField(),dim);
-
+  if #polys eq 0 then
+    K := RationalField();
+  else
+    K := BaseRing(Parent(polys[1]));
+  end if;
+  V:=VectorSpace(K,dim);
   return V!v;
 end function;
 
@@ -99,11 +102,11 @@ ram:=function(J0,Jinf)
   // indices, given the matrices J0, Jinf.
 
   d:=NumberOfRows(Jinf);
-  
+  K := BaseRing(Jinf);
   e_list:=[];
   for i:=1 to #J0 do
     for j:=1 to d do
-      e_list:=Append(e_list,Denominator(RationalField()!J0[i][j,j]));
+      Append(~e_list,Denominator(RationalField()!J0[i][j,j]));
     end for;
   end for;
   if #e_list gt 0 then
@@ -114,7 +117,7 @@ ram:=function(J0,Jinf)
   
   e_list:=[];
   for i:=1 to d do
-    e_list:=Append(e_list,Denominator(RationalField()!Jinf[i,i]));
+    Append(~e_list,Denominator(RationalField()!Jinf[i,i]));
   end for;
   e_inf:=Maximum(e_list);
 
@@ -127,22 +130,23 @@ con_mat:=function(Q,Delta,s)
   // Compute the matrix G.
 
   d:=Degree(Q);
-  Qx<x>:=RationalFunctionField(RationalField());
-  Qxy<y>:=PolynomialRing(Qx);
+  K := BaseRing(BaseRing(Q));
+  Kx<x>:=RationalFunctionField(K);
+  Kxy<y>:=PolynomialRing(Kx);
   
-  Delta:=Qx!Delta;
-  Q:=Qxy!Q;
-  s:=Qxy!s;
+  Delta:=Kx!Delta;
+  Q:=Kxy!Q;
+  s:=Kxy!s;
 
   list:=[];
-  list[1]:=Qxy!0;
+  list[1]:=Kxy!0;
   for i:=2 to d do
     list[i]:=-(i-1)*y^(i-2)*(s/Delta)*ddx(Q);
   end for;
   for i:=1 to #list do
     list[i]:=reduce_mod_Q_exact(list[i],Q);
   end for;
-  G:=ZeroMatrix(Qx,d,d);
+  G:=ZeroMatrix(Kx,d,d);
   for i:=1 to d do
     for j:=1 to d do
       G[i,j]:=Coefficient(list[i],j-1); // G acts on the right on row vectors
@@ -166,25 +170,25 @@ end function;
 jordan_0:=function(r,G0)
 
   // Compute Jordan forms of residue matrices at finite points
-
-  Qx<x>:=PolynomialRing(RationalField());
-  r:=Qx!r;
+  K := BaseRing(r);
+  Kx<x>:=PolynomialRing(K);
+  r:=Kx!r;
   fac:=Factorization(r);
   J0:=[**];
   T0:=[**];
   T0inv:=[**];
   for i:=1 to #fac do
     if Degree(fac[i][1]) eq 1 then
-      K:=RationalField();
+      F:=K;
       s:=-Evaluate(fac[i][1],0);
     else
-      K<s>:=NumberField(fac[i][1]); 
+      F<s>:=ext<K | fac[i][1]>;
     end if;
     res_G0:=Evaluate(G0*r/Derivative(r),s);
     J,T:=JordanForm(res_G0);
-    J0:=Append(J0,J);
-    T0:=Append(T0,T);
-    T0inv:=Append(T0inv,T^(-1));
+    Append(~J0,J);
+    Append(~T0,T);
+    Append(~T0inv,T^(-1));
   end for;
   return J0,T0,T0inv;
 end function;
@@ -199,18 +203,8 @@ end function;
 
 
 ord_0_mat:=function(A)
-
   // Compute ord_0(A), where A is a matrix of rational functions.
-
-  v:=ord_0(A[1,1]);
-  for i:=1 to NumberOfRows(A) do
-    for j:=1 to NumberOfColumns(A) do
-      if ord_0(A[i,j]) lt v then
-        v:=ord_0(A[i,j]);
-      end if;
-    end for;
-  end for;
-  return v;
+  return Minimum([ord_0(a) : a in Eltseq(A)]);
 end function;
 
 
@@ -221,64 +215,29 @@ ord_r:=function(f,r)
   if f eq 0 then
     return Infinity();
   end if;
-  Qx<x>:=PolynomialRing(RationalField());
-  r:=Qx!r;
-  fac:=Factorization(r);
-  vlist:=[];
-  for i:=1 to #fac do
-    v:=0;
-    while (Numerator(f) mod fac[i][1] eq 0) do
-      f:=f/fac[i][1];
-      v:=v+1;
-    end while;
-    while (Denominator(f) mod fac[i][1] eq 0) do
-      f:=f*fac[i][1];
-      v:=v-1;
-    end while;
-    vlist:=Append(vlist,v);
-  end for; 
-  min:=Minimum(vlist);
-  return min;
+  K := BaseRing(Parent(f));
+  Kx<x> := PolynomialRing(K);
+  r := Kx!r;
+  vlist := [Valuation(Numerator(f), g[1]) - Valuation(Denominator(f), g[1]) : g in Factorization(r)];
+  return Minimum(vlist);
 end function;
 
 
 ord_r_mat:=function(A,r)
-
   // Compute ord_r(A), where A is matrix of rational functions
-
-  v:=ord_r(A[1,1],r);
-  for i:=1 to NumberOfRows(A) do
-    for j:=1 to NumberOfColumns(A) do
-      if ord_r(A[i,j],r) lt v then
-        v:=ord_r(A[i,j],r);
-      end if;
-    end for;
-  end for;
-  return v;
+  return Minimum([ord_r(a, r) : a in Eltseq(A)]);
 end function;
 
 
 ord_inf:=function(f)
-
   // Compute ord_inf(f), where f is a rational function.
-
   return -Degree(Numerator(f))+Degree(Denominator(f));
 end function;
 
 
 ord_inf_mat:=function(A);
-
   // Compute ord_inf(A), where A is a matrix of rational functions.
-
-  v:=ord_inf(A[1,1]);
-  for i:=1 to NumberOfRows(A) do
-    for j:=1 to NumberOfColumns(A) do
-      if ord_inf(A[i,j]) lt v then
-        v:=ord_inf(A[i,j]);
-      end if;
-    end for;
-  end for;
-  return v;
+  return Minimum([ord_inf(a) : a in Eltseq(A)]);
 end function;
 
 
@@ -287,8 +246,9 @@ res_0:=function(w,Q,r,J0,T0inv)
   // Compute res_0(\sum w_i b^0_i dx/r).
 
   d:=Degree(Q);
-  Qx<x>:=PolynomialRing(RationalField());
-  r:=Qx!r;
+  K := BaseRing(BaseRing(Q));
+  Kx<x> := PolynomialRing(K);
+  r := Kx!r;
   fac:=Factorization(r);
   res_list:=[];
   for i:=1 to #fac do
@@ -311,17 +271,9 @@ res_0:=function(w,Q,r,J0,T0inv)
 end function;
 
 
-val_Qttinv_d:=function(v)
-
-  // Compute the valuation of an element of Q[t,1/t]^d.  
-
-  val:=Valuation(v[1]);
-  for i:=2 to #Eltseq(v) do
-    if Valuation(v[i]) lt val then
-      val:=Valuation(v[i]);
-    end if;
-  end for;
-  return val;
+val_Kttinv_d:=function(v)
+  // Compute the valuation of an element of K[t,1/t]^d.
+  return Minimum([Valuation(c) : c in Eltseq(v)]);
 end function;
 
 
@@ -330,35 +282,36 @@ res_inf:=function(w,Q,r,W0,Winf,Ginf,Jinf,Tinfinv)
   // Compute res_inf(\sum w_i b^0_i dx/r).
 
   d:=Degree(Q);
+  K := BaseRing(BaseRing(Q));
   degr:=Degree(r);
-  Qd:=RSpace(RationalField(),d);
-  Qttinv<t>:=LaurentSeriesRing(RationalField());
-  Qttinvd:=RSpace(Qttinv,d);
+  Kd:=RSpace(K,d);
+  Kttinv<t>:=LaurentSeriesRing(K);
+  Kttinvd:=RSpace(Kttinv,d);
   
   W:=Winf*W0^(-1);
   Winv:=W^(-1);
-  w:=Qttinvd!Evaluate(w,t^(-1));
+  w:=Kttinvd!Evaluate(w,t^(-1));
   w:=w*Evaluate(Winv,t^(-1));
 
   res_Ginf:=-Evaluate((1/Parent(Winf[1,1]).1)*Evaluate(Ginf,1/Parent(Winf[1,1]).1),0);
 
   // reduce to a cohomologous 1-form that is logarithmic at all points lying over x=inf:
 
-  while val_Qttinv_d(w) lt -degr+1 do
-    m:=-val_Qttinv_d(w)-degr+1;
-    mat:=res_Ginf-m*IdentityMatrix(RationalField(),d);
-    rhs:=Qd!0;
+  while val_Kttinv_d(w) lt -degr+1 do
+    m:=-val_Kttinv_d(w)-degr+1;
+    mat:=res_Ginf-m*IdentityMatrix(K,d);
+    rhs:=Kd!0;
     for i:=1 to d do
       rhs[i]:=rhs[i]+Coefficient(-w[i],-m-degr+1)/LeadingCoefficient(r);
     end for;
     vbar:=rhs*mat^(-1);
-    w:=w-ChangeRing(vbar,Qttinv)*t^(-m)*Evaluate(r*Ginf,t^(-1))-Evaluate(r,1/t)*m*t^(1-m)*ChangeRing(vbar,Qttinv);  
+    w:=w-ChangeRing(vbar,Kttinv)*t^(-m)*Evaluate(r*Ginf,t^(-1))-Evaluate(r,1/t)*m*t^(1-m)*ChangeRing(vbar,Kttinv);  
   end while;
 
   // now sum w_i b^{inf}_i dx/r is logarithmic at all points lying over x=inf
 
   w:=w*t^(degr-1);
-  v:=Qd!0;
+  v:=Kd!0;
   for i:=1 to d do
     v[i]:=Coefficient(w[i],0);
   end for;
@@ -380,11 +333,11 @@ end function;
 basis_coho:=function(Q,p,r,W0,Winf,G0,Ginf,J0,Jinf,T0inv,Tinfinv,useU,basis0,basis1,basis2)
   
   // Compute a basis for H^1(X).
-
-  Qx<x>:=PolynomialRing(RationalField());
-  Qxy<y>:=PolynomialRing(Qx);
+  K := BaseRing(BaseRing(Q));
+  Kx<x>:=PolynomialRing(K);
+  Kxy<y>:=PolynomialRing(Kx);
   d:=Degree(Q);
-  Qxd:=RSpace(Qx,d);
+  Kxd:=RSpace(Kx,d);
   degr:=Degree(r);
  
   W:=Winf*W0^(-1);
@@ -405,11 +358,11 @@ basis_coho:=function(Q,p,r,W0,Winf,G0,Ginf,J0,Jinf,T0inv,Tinfinv,useU,basis0,bas
     end for;
   end for;
   dimE0:=#basisE0;
-  E0:=VectorSpace(RationalField(),dimE0);
+  E0:=VectorSpace(K,dimE0);
 
   // Compute a matrix with kernel (E0 intersect Einf).
 
-  matE0nEinf:=ZeroMatrix(RationalField(),dimE0,d*(-ordinfW-ordinfWinv));
+  matE0nEinf:=ZeroMatrix(K,dimE0,d*(-ordinfW-ordinfWinv));
   for i:=1 to dimE0 do
     temp:=RowSequence(x^(basisE0[i][2])*Winv)[basisE0[i][1]+1];
     for j:=0 to d-1 do
@@ -423,7 +376,7 @@ basis_coho:=function(Q,p,r,W0,Winf,G0,Ginf,J0,Jinf,T0inv,Tinfinv,useU,basis0,bas
 
   // Compute a matrix with kernel the elements of E0 logarithmic at infinity.
 
-  matlogforms:=ZeroMatrix(RationalField(),dimE0,d*(-ord0W-ordinfW-ordinfWinv-1));
+  matlogforms:=ZeroMatrix(K,dimE0,d*(-ord0W-ordinfW-ordinfWinv-1));
   for i:=1 to dimE0 do
     temp:=RowSequence(x^(basisE0[i][2])*Winv)[basisE0[i][1]+1];
     for j:=0 to d-1 do
@@ -437,12 +390,12 @@ basis_coho:=function(Q,p,r,W0,Winf,G0,Ginf,J0,Jinf,T0inv,Tinfinv,useU,basis0,bas
 
   // Compute the finite residues.
   
-  w:=Qxd!0;
+  w:=Kxd!0;
   w[1]:=1;
   res0dim:=Dimension(Parent(res_0(w,Q,r,J0,T0inv)));
-  matres0:=ZeroMatrix(RationalField(),dimE0,res0dim); 
+  matres0:=ZeroMatrix(K,dimE0,res0dim); 
   for i:=1 to dimE0 do
-    w:=Qxd!0;
+    w:=Kxd!0;
     w[basisE0[i][1]+1]:=x^(basisE0[i][2]);
     coefs:=res_0(w,Q,r,J0,T0inv); 
     for j:=1 to res0dim do
@@ -452,12 +405,12 @@ basis_coho:=function(Q,p,r,W0,Winf,G0,Ginf,J0,Jinf,T0inv,Tinfinv,useU,basis0,bas
 
   // Compute the infinite residues. 
 
-  w:=Qxd!0;
+  w:=Kxd!0;
   w[1]:=1;
   resinfdim:=Dimension(Parent(res_inf(w,Q,r,W0,Winf,Ginf,Jinf,Tinfinv)));
-  matresinf:=ZeroMatrix(RationalField(),dimE0,resinfdim); 
+  matresinf:=ZeroMatrix(K,dimE0,resinfdim); 
   for i:=1 to dimE0 do
-    w:=Qxd!0;
+    w:=Kxd!0;
     w[basisE0[i][1]+1]:=x^(basisE0[i][2]);
     coefs:=res_inf(w,Q,r,W0,Winf,Ginf,Jinf,Tinfinv); 
     for j:=1 to resinfdim do
@@ -479,9 +432,9 @@ basis_coho:=function(Q,p,r,W0,Winf,G0,Ginf,J0,Jinf,T0inv,Tinfinv,useU,basis0,bas
     end for;
   end for;
   dimB0:=#basisB0;
-  B0:=VectorSpace(RationalField(),dimB0);
+  B0:=VectorSpace(K,dimB0);
 
-  matB0nBinf:=ZeroMatrix(RationalField(),dimB0,d*(-ordinfW-ordinfWinv));
+  matB0nBinf:=ZeroMatrix(K,dimB0,d*(-ordinfW-ordinfWinv));
   for i:=1 to dimB0 do
     power_x:=basisB0[i][2];
     power_y:=basisB0[i][1];
@@ -502,11 +455,11 @@ basis_coho:=function(Q,p,r,W0,Winf,G0,Ginf,J0,Jinf,T0inv,Tinfinv,useU,basis0,bas
   list:=[];
   for i:=1 to dimB0nBinf do
     vec:=basisB0nBinf[i];
-    vecQxd:=Qxd!0;
+    vecQxd:=Kxd!0;
     for j:=1 to dimB0 do
       vecQxd[basisB0[j][1]+1]:=vecQxd[basisB0[j][1]+1]+vec[j]*x^(basisB0[j][2]);
     end for;
-    vecQxd:=vecQxd*ChangeRing(r*G0,Qx)+r*ddx_vec(vecQxd);
+    vecQxd:=vecQxd*ChangeRing(r*G0,Kx)+r*ddx_vec(vecQxd);
     coefs:=[];
     for j:=1 to dimE0 do
       power_x:=basisE0[j][2];
@@ -574,35 +527,36 @@ basis_coho:=function(Q,p,r,W0,Winf,G0,Ginf,J0,Jinf,T0inv,Tinfinv,useU,basis0,bas
     dim:=dimH1X;
   end if;
 
+  p_rat := Factorization(Norm(p))[1][1];
+  vp := Valuation(K!p_rat, p);
   for i:=1 to dim do
-    valdenom:=0;
-    for j:=1 to dimE0 do
-      valdenom:=Minimum(valdenom,Valuation(b[i][j],p));
-    end for;
-    b[i]:=p^(-valdenom)*b[i];
+    valdenom := Minimum([Valuation(b[i][j], p)/vp : j in [1 .. dimE0]]);
+    if valdenom lt 0 then
+      b[i] *:= p_rat^(Ceiling(-valdenom));
+    end if;
   end for; 
 
   matb:=Matrix(b);
   quo_map:=matb^(-1);
 
-  integrals:=[Qxd|];
+  integrals:=[Kxd|];
   for i:=2 to dimB0nBinf do
-    vec:=Qxd!0;
+    vec:=Kxd!0;
     for j:=1 to dimB0 do
-      vec[basisB0[j][1]+1]:=vec[basisB0[j][1]+1]+(basisB0nBinf[i][j])*x^(basisB0[j][2]);
+      vec[basisB0[j][1]+1] +:= (basisB0nBinf[i][j])*x^(basisB0[j][2]);
     end for;
-    integrals:=Append(integrals,LeadingCoefficient(r)*vec); // factor lc(r) here, since working with dx/z basis instead of dx/r
+    Append(~integrals,LeadingCoefficient(r)*vec); // factor lc(r) here, since working with dx/z basis instead of dx/r
   end for;
 
-  Qxd:=RSpace(Qx,d);
-  basis:=[Qxd|];
+  Kxd:=RSpace(Kx,d);
+  basis:=[Kxd|];
   
   for i:=1 to dim do
-    vec:=Qxd!0;
+    vec:=Kxd!0;
     for j:=1 to dimE0 do
-      vec[basisE0[j][1]+1]:=vec[basisE0[j][1]+1]+(RationalField()!(b[i][j]))*(Qx.1)^(basisE0[j][2]);
+      vec[basisE0[j][1]+1] +:= (K!(b[i][j]))*(Kx.1)^(basisE0[j][2]);
     end for;
-    basis:=Append(basis,vec);
+    Append(~basis,vec);
   end for;
 
   return basis,integrals,quo_map;

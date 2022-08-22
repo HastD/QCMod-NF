@@ -1,17 +1,21 @@
 AttachSpec("coleman.spec");
 import "coho.m" : mat_W0, mat_Winf;
 load "data/short-coleman-test-data.m";
+load "data/quartic-test-data.m";
 
-for data in short_coleman_data_list do
+for i := 1 to #short_coleman_data_list do
+  data := short_coleman_data_list[i];
   Q := data`Q;
   W0 := mat_W0(Q);
   Winf := mat_Winf(Q);
+  basis := H1Basis(Q, data`p);
   // check equations
   // TODO
   // check against recorded values
   assert W0 eq data`W0;
   assert Winf eq data`Winf;
-  printf "mat_W0(Q) and mat_Winf(Q) give expected output for Q = %o.\n", Q;
+  assert basis eq test_data_list[i]`h1basis;
+  printf "Expected outputs computed for Q = %o.\n", Q;
 end for;
 
 R<t> := PolynomialRing(Rationals());

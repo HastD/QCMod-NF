@@ -96,7 +96,7 @@ function QCModAffine_test_data(Q, p :
   // ==========================================================
 
   if pl gt 1 then print " Computing a symplectic basis of H^1"; end if;
-  h1basis, g, r, W0 := H1Basis(Q,p,N);
+  h1basis, g, r, W0 := H1Basis(Q, p);
   test`g := g; test`W0 := W0;
   if #basis0*#basis1 gt 0 then // Use the given basis
     h1basis := basis0 cat basis1;

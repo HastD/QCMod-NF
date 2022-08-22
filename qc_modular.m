@@ -111,7 +111,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
   // ==========================================================
 
   if pl gt 1 then print " Computing a symplectic basis of H^1"; end if;
-  h1basis, g, r, W0 := H1Basis(Q,p,N);
+  h1basis, g, r, W0 := H1Basis(Q, p);
   if #basis0*#basis1 gt 0 then // Use the given basis
     h1basis := basis0 cat basis1;
   end if;

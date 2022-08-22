@@ -57,13 +57,17 @@ frobmatrix:=function(Q,p,N,Nmax,g,r,W0,Winf,G0,Ginf,frobmatb0r,red_list_fin,red_
 end function;
 
 
-intrinsic H1Basis(Q::RngUPolElt[RngUPol], p::RngIntElt, N::RngIntElt)
+intrinsic H1Basis(Q::RngUPolElt[RngUPol], p::RngOrdIdl)
   -> SeqEnum[ModTupRngElt[RngUPol]], RngIntElt, RngUPolElt, AlgMatElt[FldFunRat]
   {Compute a basis for H^1(X).}
+  K := BaseRing(BaseRing(Q));
+  OK := Integers(K);
+  require Order(p) eq OK and IsPrime(p): "p must be a prime ideal of K.";
+
   require IsIrreducible(Q): "Curve is not irreducible";
 
   d:=Degree(Q);
-  g:=genus(Q,p);
+  g:=genus(Q, p);
   r,Delta,s:=auxpolys(Q);
 
   W0:=mat_W0(Q);
@@ -72,9 +76,10 @@ intrinsic H1Basis(Q::RngUPolElt[RngUPol], p::RngIntElt, N::RngIntElt)
   Winfinv:=Winf^(-1);
   W:=Winf*W0^(-1);
 
-  if (FiniteField(p)!LeadingCoefficient(Delta) eq 0) or (Degree(r) lt 1) or (not smooth(r,p)) or (not (is_integral(W0,p) and is_integral(W0inv,p) and is_integral(Winf,p) and is_integral(Winfinv,p))) then
-    error "bad prime";
-  end if;
+  require not (LeadingCoefficient(Delta)*OK subset p): "Bad prime";
+  require Degree(r) ge 1: "Bad prime";
+  require smooth(r, p): "Bad prime";
+  require is_integral(W0, p) and is_integral(W0inv, p) and is_integral(Winf, p) and is_integral(Winfinv, p): "Bad prime";
 
   G:=con_mat(Q,Delta,s);
   G0:=W0*Evaluate(G,Parent(W0[1,1]).1)*W0^(-1)+ddx_mat(W0)*W0^(-1);
@@ -82,21 +87,34 @@ intrinsic H1Basis(Q::RngUPolElt[RngUPol], p::RngIntElt, N::RngIntElt)
 
   Jinf,Tinf,Tinfinv:=jordan_inf(Ginf);
   J0,T0,T0inv:=jordan_0(r,G0);
-  e0,einf:=ram(J0,Jinf);
- 
-  delta:=Floor(log(p,-(ord_0_mat(W)+1)*einf))+Floor(log(p,(Floor((2*g-2)/d)+1)*einf));
 
   basis:=basis_coho(Q,p,r,W0,Winf,G0,Ginf,J0,Jinf,T0inv,Tinfinv,false,[],[],[]);
   return basis,g,r,W0;
 end intrinsic;
 
+intrinsic H1Basis(Q::RngUPolElt[RngUPol], p::RngIntElt)
+  -> SeqEnum[ModTupRngElt[RngUPol]], RngIntElt, RngUPolElt, AlgMatElt[FldFunRat]
+  {Compute a basis for H^1(X).}
+  K := BaseRing(BaseRing(Q));
+  if K eq RationalField() then
+    K := RationalsAsNumberField();
+    Q := ChangeRing(Q, PolynomialRing(K));
+  end if;
+  pri := p*Integers(K);
+  require IsPrime(pri): "p must be prime in the base field K.";
+  basis, g, r, W0 := H1Basis(Q, pri);
+  return basis, g, r, W0;
+end intrinsic;
 
-intrinsic ColemanData(Q::RngUPolElt[RngUPol], p::RngIntElt, N::RngIntElt :
+intrinsic ColemanData(Q::RngUPolElt[RngUPol], p::RngOrdIdl, N::RngIntElt :
                       useU:=false, basis0:=[], basis1:=[], basis2:=[], heights:=false)
   -> Rec
   {Takes a polynomial Q in two variables x,y over the rationals which is monic in y.
   Returns the Coleman data of (the projective nonsingular model of) the curve defined
   by Q at p to p-adic precision N.}
+  K := BaseRing(BaseRing(Q));
+  OK := Integers(K);
+  require Order(p) eq OK and IsPrime(p): "p must be a prime ideal of K.";
 
   require IsIrreducible(Q): "Curve is not irreducible";
 
@@ -110,7 +128,7 @@ intrinsic ColemanData(Q::RngUPolElt[RngUPol], p::RngIntElt, N::RngIntElt :
   Winfinv:=Winf^(-1);
   W:=Winf*W0^(-1);
 
-  require FiniteField(p)!LeadingCoefficient(Delta) ne 0: "Bad prime";
+  require not (LeadingCoefficient(Delta)*OK subset p): "Bad prime";
   require Degree(r) ge 1: "Bad prime";
   require smooth(r,p): "Bad prime";
   require is_integral(W0,p) and is_integral(W0inv,p) and is_integral(Winf,p) and is_integral(Winfinv,p): "Bad prime";
@@ -145,6 +163,22 @@ intrinsic ColemanData(Q::RngUPolElt[RngUPol], p::RngIntElt, N::RngIntElt :
   out`frobmatb0r:=frobmatb0r;
 
   return out;
+end intrinsic;
+
+intrinsic ColemanData(Q::RngUPolElt[RngUPol], p::RngIntElt, N::RngIntElt :
+                      useU:=false, basis0:=[], basis1:=[], basis2:=[], heights:=false)
+  -> Rec
+  {Takes a polynomial Q in two variables x,y over the rationals which is monic in y.
+  Returns the Coleman data of (the projective nonsingular model of) the curve defined
+  by Q at p to p-adic precision N.}
+  K := BaseRing(BaseRing(Q));
+  if K eq RationalField() then
+    K := RationalsAsNumberField();
+    Q := ChangeRing(Q, PolynomialRing(K));
+  end if;
+  pri := p*Integers(K);
+  require IsPrime(pri): "p must be prime in the base field K.";
+  return ColemanData(Q, pri, N : useU:=useU, basis0:=basis0, basis1:=basis1, basis2:=basis2, heights:=heights);
 end intrinsic;
 
 function xy_coordinates(P, data)
