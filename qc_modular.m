@@ -194,9 +194,8 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
   // TODO: This might not always work for very bad points
   bad_affine_rat_pts_xy := [[lindepQp(P[1]), lindepQp(P[2])] : P in bad_coordinates]; 
 
-  vprintf QCMod, 2: "\n Good affine rational points:\n%o\n", good_affine_rat_pts_xy;  
-  vprintf QCMod, 2: "\n Bad affine rational points:\n%o\n", bad_affine_rat_pts_xy;  
-  end if;
+  vprintf QCMod, 2: "\n Good affine rational points:\n%o\n", good_affine_rat_pts_xy;
+  vprintf QCMod, 2: "\n Bad affine rational points:\n%o\n", bad_affine_rat_pts_xy;
 
   if ISA(Type(base_point), RngIntElt) and IsZero(base_point) then  // No base point given, take the first possible one.
     global_base_point_index := 1;
@@ -411,7 +410,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
     end for;
 
     gammafil_listb_to_z := [* 0 : k in [1..numberofpoints] *]; // evaluations of gammafil at local coordinates for all points 
-    vprint QCMod 3: "Computing expansions of the filtration-respecting function gamma_fil.\n";
+    vprint QCMod, 3: "Computing expansions of the filtration-respecting function gamma_fil.\n";
     for i := 1 to numberofpoints do
       if G_list[i] ne 0 then
         gammafil_listb_to_z[i] := expand_algebraic_function(Qppoints[i], gammafil, data, Nhodge, prec);
