@@ -22,7 +22,7 @@ X := HyperellipticCurve(f107);
 X := Transformation(X, [0,1,1,0]);
 "Compute the rational points on ", X;
 J := Jacobian(X);
-assert HasAbsolutelyIrreducibleJacobian(X, 1000 : printlevel := 0);
+assert HasAbsolutelyIrreducibleJacobian(X, 1000);
 "The Jacobian is absolutely simple";
 
 N := 12;
@@ -34,8 +34,9 @@ ptsX := Points(X:Bound:=100);
 
 // Find primes for the quadratic Chabauty computation. In particular, check whether they 
 // look promising for a combination of qc and the Mordell-Weil sieve
+SetVerbose("QCMod", 1);
 qc_primes, groups , good_primes := 
-                find_qc_primes(X : mws_primes_bound := 10000, qc_primes_bound := 100, number_of_bad_disks := 1, inf_modp_allowed := false, ordinary := false, known_rat_pts := ptsX, printlevel :=1); 
+                find_qc_primes(X : mws_primes_bound := 10000, qc_primes_bound := 100, number_of_bad_disks := 1, inf_modp_allowed := false, ordinary := false, known_rat_pts := ptsX); 
 
 // Compute generators for the Mordell-Weil group using Stoll's MordellWeilGroupGenus2
 torsion_bas, torsion_orders, bas := generators(J);
@@ -106,7 +107,7 @@ height_coeffs := height_coefficients(divisors, intersections, local_CG_hts, data
 
 printf "\nStarting quadratic Chabauty for p = %o.\n", p;
 time good_affine_rat_pts_xy, no_fake_pts, bad_affine_rat_pts_xy, data, fake_rat_pts, bad_Qppoints :=
-     QCModAffine(y^2-f, p : printlevel := 1, unit_root_splitting := true,
+     QCModAffine(y^2-f, p : unit_root_splitting := true,
           N := 17, prec := 30, base_point := base_pt, height_coeffs := height_coeffs, use_log_basis := true);
 
 for i in [1..#fake_rat_pts] do
@@ -153,7 +154,8 @@ coeffs_mod_Mp := prerun_mwsieve_g2r2(J, bas, base_pt, modulus, p, bad_pts_p);
 //mws_primes_p := sieving_primes(modlus, good_primes, groups, 10);  // compute sieving primes
 mws_primes_p := [41,83,641,1697,4057,10853];
 printf "starting MW-sieve to exclude rational points in bad and infinite disks at p=%o\n", p;
-time done_bad := MWSieve(J, mws_primes_p, modulus, bas cat torsion_bas, X!base_pt, coeffs_mod_Mp : special_p_points := [<p, bad_pts_p>], printlevel := 0 ); 
+SetVerbose("QCMod", 0);
+time done_bad := MWSieve(J, mws_primes_p, modulus, bas cat torsion_bas, X!base_pt, coeffs_mod_Mp : special_p_points := [<p, bad_pts_p>]); 
 assert done_bad;
 printf "There are no rational points in bad or infinite disks for p=%o", p;
 

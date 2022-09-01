@@ -19,7 +19,7 @@ X := HyperellipticCurve(f167);
 X := Transformation(X, [0,1,1,3]);
 "Compute the rational points on ", X;
 J := Jacobian(X);
-assert HasAbsolutelyIrreducibleJacobian(X, 1000 : printlevel := 0);
+assert HasAbsolutelyIrreducibleJacobian(X, 1000);
 "The Jacobian is absolutely simple";
 N := 15;
 f := HyperellipticPolynomials(X); 
@@ -29,7 +29,7 @@ ptsX := Points(X:Bound:=100);
 // Find primes for the quadratic Chabauty computation. In particular, check whether they 
 // look promising for a combination of qc and the Mordell-Weil sieve
 //qc_primes, groups, good_primes := 
-//                find_qc_primes(X : mws_primes_bound := 500, qc_primes_bound := 100, number_of_bad_disks := 1, inf_modp_allowed := false, ordinary := false, known_rat_pts := ptsX, printlevel :=0); 
+//                find_qc_primes(X : mws_primes_bound := 500, qc_primes_bound := 100, number_of_bad_disks := 1, inf_modp_allowed := false, ordinary := false, known_rat_pts := ptsX); 
 
 // Compute generators for the full Mordell-Weil group using Stoll's MordellWeilGroupGenus2
 // This spares us the trouble of checking saturation in MW sieve computation.
@@ -96,9 +96,10 @@ local_CG_hts := [-ht1, ht2, -ht3];
 data := ColemanData(y^2-f, p, 15 : useU :=false);
 height_coeffs := height_coefficients(divisors, intersections, local_CG_hts, data);
 
+SetVerbose("QCMod", 1);
 printf "\nStarting quadratic Chabauty for p = %o.\n", p;
 time good_affine_rat_pts_xy, no_fake_pts, bad_affine_rat_pts_xy, data, fake_rat_pts, bad_Qppoints :=
-     QCModAffine(y^2-f, p : printlevel := 1, N := 20, unit_root_splitting := true,
+     QCModAffine(y^2-f, p : N := 20, unit_root_splitting := true,
           base_point := base_pt, height_coeffs := height_coeffs, use_log_basis := true);
 
   // Here * good_affine_rat_pts_xy contains the found rational points in disks where the Frob lift is defined 
@@ -115,7 +116,7 @@ time good_affine_rat_pts_xy, no_fake_pts, bad_affine_rat_pts_xy, data, fake_rat_
     // lower precision for speed and to avoid issues in Coleman integrals.
   end for;
   data := ColemanData(y^2-f, p, 8 : useU :=false);
-  fake_coeffs_mod_pN, rat_coeffs_mod_pN := coefficients_mod_pN(fake_rat_pts, good_affine_rat_pts_xy, divisors, base_pt, splitting_indices, data : printlevel := 1); 
+  fake_coeffs_mod_pN, rat_coeffs_mod_pN := coefficients_mod_pN(fake_rat_pts, good_affine_rat_pts_xy, divisors, base_pt, splitting_indices, data); 
   // Check that the coefficients of the known rational points are correct.
   assert &and[&+[rat_coeffs_mod_pN[j,i] * bas[i] : i in [1..gX]] eq X!good_affine_rat_pts_xy[j] - X!base_pt : j in [1..#good_affine_rat_pts_xy]];
   Append(~fake_coeffs, [ fake_coeffs_mod_pN ]);
@@ -156,7 +157,8 @@ coeffs_mod_Mp := prerun_mwsieve_g2r2(J, bas, base_pt, modulus, p, bad_pts_p);
 //mws_primes_p := sieving_primes(modulus, good_primes, groups, 10);  // compute sieving primes
 mws_primes_p := [7,11,19,233,283,331,467,983,1049,1667,10861,25771];
 printf "starting MW-sieve to exclude rational points in bad and infinite disks at p=%o\n", p;
-time done_bad := MWSieve(J, mws_primes_p, modulus, bas cat torsion_bas, X!base_pt, coeffs_mod_Mp : special_p_points := [<p, bad_pts_p>], printlevel := 0 ); 
+SetVerbose("QCMod", 0);
+time done_bad := MWSieve(J, mws_primes_p, modulus, bas cat torsion_bas, X!base_pt, coeffs_mod_Mp : special_p_points := [<p, bad_pts_p>]); 
 assert done_bad;
 printf "There are no rational points in bad or infinite disks for p=%o", p;
 

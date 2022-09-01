@@ -253,14 +253,15 @@ end function;
 
 function make_bivariate(Q)
 
-  d:=Degree(Q);
+  d := Degree(Q);
+  K := BaseRing(BaseRing(Q));
+  Kx := RationalFunctionField(K);
+  Kxy := PolynomialRing(Kx);
 
-  Qx:=RationalFunctionField(RationalField()); Qxy:=PolynomialRing(Qx);
-
-  f:=Qxy!0;
+  f := Kxy!0;
   for i:=0 to d do
     for j:=0 to Degree(Coefficient(Q,i)) do
-      f:=f+Coefficient(Coefficient(Q,i),j)*Qxy.1^i*Qx.1^j;
+      f +:= Coefficient(Coefficient(Q,i),j)*Kxy.1^i*Kx.1^j;
     end for;
   end for;
   
@@ -268,27 +269,12 @@ function make_bivariate(Q)
 end function;
 
 function function_field(Q)
-
   return FunctionField(make_bivariate(Q)); // function field of curve
-
 end function;
 
 
-fun_field:=function(data);
-
-  Q:=data`Q; d:=Degree(Q);
-
-  Qx:=RationalFunctionField(RationalField()); Qxy:=PolynomialRing(Qx);
-
-  f:=Qxy!0;
-  for i:=0 to d do
-    for j:=0 to Degree(Coefficient(Q,i)) do
-      f:=f+Coefficient(Coefficient(Q,i),j)*Qxy.1^i*Qx.1^j;
-    end for;
-  end for;
-  
-  return FunctionField(f); // function field of curve
-
+function fun_field(data);
+  return function_field(data`Q); // function field of curve
 end function;
 
 // Returns the index of a rational point in the set Qppoints.
@@ -328,27 +314,27 @@ function good_points(Qpoints, Qppoints, data)
 end function;
 
 
-function coefficients_mod_pN(fake_rat_pts, rat_pts, divisors, base_pt, splitting_indices, data : printlevel := 0)
+function coefficients_mod_pN(fake_rat_pts, rat_pts, divisors, base_pt, splitting_indices, data)
   // return the coefficients mod p^N of the images of the fake and the actual rational points 
   // under the Abel Jacobi map given by base_pt in terms of generators of the MW group mod
   // torsion
   //
 
-  if printlevel gt 1 then "compute basis integrals"; end if;
+  vprint QCMod, 2: "compute basis integrals";
 
   basis_integrals := [coleman_integrals_on_basis_divisors(t[2], t[1], data) : t in divisors];
   M := (Matrix(pAdicField(data`p, data`N), data`g, data`g, [basis_integrals[1,1], basis_integrals[2,1], basis_integrals[1,2], basis_integrals[2,2]]))^-1;
   index_matrix := Transpose(Matrix(splitting_indices));
 
-  if printlevel gt 2 then "compute integrals for rational points"; end if;
+  vprint QCMod, 3: "compute integrals for rational points";
 
   rat_integrals  := [coleman_integrals_on_basis_divisors([base_pt], [P], data) : P in rat_pts];
-  if printlevel gt 1 then "rational integrals", rat_integrals; end if;
+  vprint QCMod, 2: "rational integrals", rat_integrals;
   
   rat_coeffs  := [Eltseq(ChangeRing(index_matrix*M*Matrix(2,1,[ints[1], ints[2]]), Integers())) : ints in rat_integrals];
-  if printlevel gt 2 then "compute integrals for fake rational points"; end if;
+  vprint QCMod, 3: "compute integrals for fake rational points";
   fake_integrals := [coleman_integrals_on_basis_divisors([base_pt], [P], data) : P in fake_rat_pts];
-  if printlevel gt 1 then "fake integrals", fake_integrals; end if;
+  vprint QCMod, 2: "fake integrals", fake_integrals;
   fake_coeffs := [Eltseq(ChangeRing(index_matrix*M*Matrix(2,1,[ints[1], ints[2]]), Integers())) : ints in fake_integrals];
 
   return fake_coeffs, rat_coeffs;
@@ -369,18 +355,17 @@ end function;
 
 
 
-intrinsic rank_J0Nplus(N::RngIntElt : Lprec := 30, printlevel := 0)
+intrinsic rank_J0Nplus(N::RngIntElt : Lprec := 30)
   -> RngIntElt, SeqEnum
   {Compute the rank of J0(N)+ using Kolyvagin-Logachev. Will
   throw an error if the analytic rank for any newform appears 
   to be >1.}
   NF := Newforms(CuspForms(Gamma0(N),2));
   errors := [];
-  pl := printlevel;
 
   for f in [t[1] : t  in NF | AtkinLehnerEigenvalue(t[1], N) eq 1] do
-    if pl gt 1 then printf "The newform is %o, \n", qExpansion(f, 20); end if;
-    if pl gt 1 then printf "defined over %o. \n\b", NumberField(BaseRing(f)); end if;
+    vprintf QCMod, 2: "The newform is %o, \n", qExpansion(f, 20);
+    vprintf QCMod, 2: "defined over %o. \n\b", NumberField(BaseRing(f));
     L := LSeries(ModularAbelianVariety(f));
     d := Degree(NumberField(BaseRing(f)));
     if not IsZeroAt(L, 1) then return 0, [0: i in [1..d]]; end if;
@@ -390,12 +375,10 @@ intrinsic rank_J0Nplus(N::RngIntElt : Lprec := 30, printlevel := 0)
 
     for L in Lseries do 
       LSetPrecision(L, Lprec);
-      if pl gt 1 then "checking the functional equation for conjugate",i; end if;
+      vprintf QCMod, 2: "checking the functional equation for conjugate %o\n",i;
       assert IsZero(CFENew(L));
       taylor := LTaylor(L, 1, 1);  
-      if pl gt 0 then 
-        printf "The Taylor expansion of the L-function of %o at s=1 is \n%o\n", f, taylor;
-      end if;
+      vprintf QCMod: "The Taylor expansion of the L-function of %o at s=1 is \n%o\n", f, taylor;
       if IsZero(Coefficient(taylor, 0)) then 
         coeff := Coefficient(taylor, 1);
         if Abs(coeff) lt 10^-3 then // might be 0

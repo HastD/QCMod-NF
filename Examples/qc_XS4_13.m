@@ -17,10 +17,10 @@ p := 11;
 Q := SecondAffinePatch(Q_S4, p );
 Q_inf, A := SecondAffinePatch(Q, p );
 good_pts1, bool1, bad_pts1, _, _, bad_disks_1 := 
-                            QCModAffine(Q, p : N := 15, printlevel := 0);
+                            QCModAffine(Q, p : N := 15);
 
 good_pts2, bool2, bad_pts2, _, _, bad_disks_2 := 
-                            QCModAffine(Q_inf, p : N:= 15, printlevel := 0);
+                            QCModAffine(Q_inf, p : N:= 15);
 assert bool1 and bool2;
 
 "Good affine points on first patch",

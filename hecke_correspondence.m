@@ -7,7 +7,7 @@ freeze;
 import "misc.m": lindepQp;
 
 intrinsic HeckeCorrespondenceQC(data::Rec, q::RngIntElt, N::RngIntElt :
-                                basis0:=[], basis1:=[], printlevel:=1, use_polys:=[])
+                                basis0:=[], basis1:=[], use_polys:=[])
   -> SeqEnum[AlgMatElt], AlgMatElt, RngIntElt
   {For i=1,...,g-1, construct a nice correspondence Zi from the ith power of
   the Hecke operator Aq using Eichler-Shimura. 
@@ -52,7 +52,7 @@ intrinsic HeckeCorrespondenceQC(data::Rec, q::RngIntElt, N::RngIntElt :
   end if;
 
   if q ne p then 
-    if printlevel gt 0 then print  "\nCompute Coleman data wrt q=", q; end if;
+    vprintf QCMod: "\nCompute Coleman data wrt q=%o\n", q;
     data:=ColemanData(Q,q,N:basis0:=basis0,basis1:=basis1);
   end if;
 

@@ -21,7 +21,8 @@ A2<y0, x0> := AmbientSpace(X1); Equation(X1);
 Qx<x> := PolynomialRing(RationalField());
 Qxy<y> := PolynomialRing(Qx);
 Q := y^3 + y^2*x^2 + y^2*x + y^2 + y*x^3 + y*x - y + x^3 - 3*x^2 + x;
-time success, Cpts, p, Q_inf := QCModQuartic(Q, S : N := 25, printlevel := 1);
+SetVerbose("QCMod", 1);
+time success, Cpts, p, Q_inf := QCModQuartic(Q, S : N := 25);
 assert success;
 "Rational points on Xns(13)+", Cpts;
 
@@ -69,7 +70,7 @@ end for;
 
 good_pts_first_patch, bool, bad_pts_first_patch, _, _, bad_disks_first_patch := 
           QCModAffine(Q, 17 : basis0 := basis0, basis1 := basis1,
-                     basis2 := basis2, N := 20, prec := 25, base_point := [0,0], printlevel := 1);
+                     basis2 := basis2, N := 20, prec := 25, base_point := [0,0]);
 
 
 "Good affine rational points on first patch:", good_pts_first_patch;
@@ -109,6 +110,6 @@ end for;
 
 good_pts_second_patch, bool, bad_pts_second_patch, _, _, bad_disks_second_patch := 
           QCModAffine(Q_inf, 17 : basis0 := basis0, basis1 := basis1,
-                     basis2 := basis2, N := 20, prec := 25, base_point := [0,-1], printlevel := 1);
+                     basis2 := basis2, N := 20, prec := 25, base_point := [0,-1]);
 
 "Good affine rational points on second patch:", good_pts_second_patch;

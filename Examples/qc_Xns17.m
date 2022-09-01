@@ -33,7 +33,8 @@ use_polys:=[
 ];
 // a list [Pi] of polynomials such that [Pi(Tp)] span the subspace of End^0 (J) annihilating the one dimensional and two dimensional isogeny factors of Jns+(17).
 
-good_affine_rat_pts_xy1, success1, bad_affine_rat_pts_xy1, _, _, bad_disks1 := QCModAffine(Q1,p:printlevel:=1,use_polys:=use_polys,number_of_correspondences:=2,N:=20);
+SetVerbose("QCMod", 1);
+good_affine_rat_pts_xy1, success1, bad_affine_rat_pts_xy1, _, _, bad_disks1 := QCModAffine(Q1,p:use_polys:=use_polys,number_of_correspondences:=2,N:=20);
 assert success1;
 // the only bad disks are at infinity. we deal with these with the second model
 
@@ -42,4 +43,4 @@ Q2:=y^6 + (267/94*x - 135/47)*y^5 + (567/188*x^2 - 1041/94*x - 843/94)*y^4 + (71
     5/188;
 
 // the only bad disks of this model (at p=p) are at infinity, and the infinite Fp-points of the two models do not intersect.
-good_affine_rat_pts_xy2, success2, bad_affine_rat_pts_xy2, _, _, bad_disks2 := QCModAffine(Q2,p:printlevel:=1,use_polys:=use_polys,number_of_correspondences:=2,N:=20);
+good_affine_rat_pts_xy2, success2, bad_affine_rat_pts_xy2, _, _, bad_disks2 := QCModAffine(Q2,p:use_polys:=use_polys,number_of_correspondences:=2,N:=20);

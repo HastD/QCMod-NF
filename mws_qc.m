@@ -58,8 +58,7 @@ end function;
 
 
 intrinsic prerun_mwsieve_g2r2(J::JacHyp, bas::SeqEnum[JacHypPt], base_pt::SeqEnum[FldRatElt], modulus::RngIntElt,
-                              p::RngIntElt, modp_points::SeqEnum[SeqEnum[FldFinElt]] :
-                              printlevel := 0)
+                              p::RngIntElt, modp_points::SeqEnum[SeqEnum[FldFinElt]])
   -> SeqEnum[SeqEnum[RngIntElt]]
   {Compute all classes in J(Q)/modulus*J(Q) whose image mod p
   contains the image of an Fp-point on the curve.
@@ -70,26 +69,26 @@ intrinsic prerun_mwsieve_g2r2(J::JacHyp, bas::SeqEnum[JacHypPt], base_pt::SeqEnu
   Cp := BaseChange(C, Bang(Rationals(), GF(p)));
   Jp := BaseChange(J, GF(p));
   G, m := AbelianGroup(Jp);
-  if printlevel gt 0 then        printf " GroupInfo: p = %o...\n", p; end if;
+  vprintf QCMod: " GroupInfo: p = %o...\n", p;
   I := Invariants(G);
-  //if printlevel gt 0 then        printf "   #C(F_p) = %o, Invariants(G) = %o\n", #pts, I; end if;
+  //vprintf QCMod: "   #C(F_p) = %o, Invariants(G) = %o\n", #pts, I;
   fI := Factorization(I[#I]);
-  if printlevel gt 0 then        printf  "   Exponent = %o\n", fI; end if;
-  if printlevel gt 0 then        printf  "   Group Structure = %o\n", G; end if;
+  vprintf QCMod: "   Exponent = %o\n", fI;
+  vprintf QCMod: "   Group Structure = %o\n", G;
 
   inj := func<pt | Cp!pt - Cp!base_pt>;
-  if printlevel gt 1 then        "make DL"; end if;
+  vprint QCMod, 2: "make DL";
   DL := MakeDL(G, m); 
   
-  if printlevel gt 1 then        "starting DL of generators"; end if;
+  vprint QCMod, 2: "starting DL of generators";
   imbas := [DL(Jp!b) : b in bas]; // ... @@ m
-  if printlevel gt 1 then        "finished DL of generators"; end if;
+  vprint QCMod, 2: "finished DL of generators";
   orders := [Order(g) : g in imbas];
   lcm_orders := LCM(orders);
 
-  if printlevel gt 0 then        "starting DL of points on curve over F_p"; end if;
+  vprint QCMod: "starting DL of points on curve over F_p";
   imC := {DL(inj(Cp!Eltseq(pt_seq))) : pt_seq in modp_points};
-  if printlevel gt 0 then        "finished DL"; end if;
+  vprint QCMod: "finished DL";
 
   Gsub := sub<G | imbas>;
   imbas := ChangeUniverse(imbas, Gsub);
@@ -118,7 +117,7 @@ intrinsic MWSieve(J::JacHyp, sieving_primes::SeqEnum[RngIntElt], modulus::RngInt
                   base_pt::PtHyp, fake_coeffs::SeqEnum[SeqEnum[RngIntElt]] :
                   GIlb := 2, SmoothBound := 10000, satknown := {Integers()|}, excluded := {Integers()|},
                   satunknown := {Integers() | }, known_rat_coeffs := {}, bool_list := [true : i in [1..#fake_coeffs]],
-                  unsat := {Integers()|}, special_p_points := [], printlevel := 0) 
+                  unsat := {Integers()|}, special_p_points := []) 
   -> BoolElt, SeqEnum[BoolElt], SetEnum[RngIntElt], SetEnum[RngIntElt], SeqEnum[SeqEnum[RngIntElt]]
   {Implementation of the Mordell-Weil sieve based on an earlier Magma version of the Mordell-Weil sieve due to
   Michael Stoll, adapted for use in combination with quadratic Chabauty.}
@@ -134,23 +133,23 @@ intrinsic MWSieve(J::JacHyp, sieving_primes::SeqEnum[RngIntElt], modulus::RngInt
         Cp := BaseChange(C, Bang(Rationals(), GF(p)));
         pts := Points(Cp);
         G, m := AbelianGroup(Jp);
-        if printlevel gt 0 then        printf " GroupInfo: p = %o...\n", p; end if;
+        vprintf QCMod: " GroupInfo: p = %o...\n", p;
         I := Invariants(G);
-        if printlevel gt 0 then        printf "   #C(F_p) = %o, Invariants(G) = %o\n", #pts, I; end if;
+        vprintf QCMod: "   #C(F_p) = %o, Invariants(G) = %o\n", #pts, I;
         fI := Factorization(I[#I]);
-        if printlevel gt 0 then        printf  "   Exponent = %o\n", fI; end if;
-        if printlevel gt 0 then        printf  "   Group Structure = %o\n", G; end if;
+        vprintf QCMod: "   Exponent = %o\n", fI;
+        vprintf QCMod: "   Group Structure = %o\n", G;
 
         scalar := #unsat eq 0 select 1 else unsat[1]^Valuation(I[#I], unsat[1]);
-        if printlevel gt 1 then        printf  "   Look at %o-multiples \n", scalar; end if;
+        vprintf QCMod, 2: "   Look at %o-multiples \n", scalar;
 
         inj := func<pt | Cp!pt - Cp!base_pt>;
-        if printlevel gt 1 then        "make DL"; end if;
+        vprint QCMod, 2: "make DL";
         DL := MakeDL(G, m); 
         
-        if printlevel gt 1 then        "starting DL of generators"; end if;
+        vprint QCMod, 2: "starting DL of generators";
         imbas := [DL(Jp!b) : b in bas]; // ... @@ m
-        if printlevel gt 1 then        "finished DL of generators"; end if;
+        vprint QCMod, 2: "finished DL of generators";
         orders := [Order(g) : g in imbas];
         lcm_orders := LCM(orders);
 
@@ -163,14 +162,14 @@ intrinsic MWSieve(J::JacHyp, sieving_primes::SeqEnum[RngIntElt], modulus::RngInt
         satunknown join:= {a[1] : a in fI};
         satunknown diff:= satknown;
 
-        if printlevel gt 0 then        "starting DL of points on curve over F_p"; end if;
+        vprint QCMod: "starting DL of points on curve over F_p";
         if p notin [t[1] : t in special_p_points] then
           imC := {DL(inj(pt)) : pt in pts};
         else 
           indp := Index([t[1] : t in special_p_points], p);
           imC := {DL(inj(Cp!Eltseq(pt_seq))) : pt_seq in special_p_points[indp,2]};
         end if;
-        if printlevel gt 0 then        "finished DL"; end if;
+        vprint QCMod: "finished DL";
         imC := {scalar*pt : pt in imC};
         Gsub := sub<G | imbas>;
         imC := {Gsub | pt : pt in imC | pt in Gsub};
@@ -317,7 +316,7 @@ end intrinsic;
 
 
 
-function sieving_primes(M, primes, groups, bound : printlevel := 0)
+function sieving_primes(M, primes, groups, bound)
     // Given a modulus M, a list of primes, a list of abelian groups, one for each
     // prime in primes, and a bound on the quality of the expected information per prime,
     // compute a list of promising primes for the  Mordell-Weil sieve.
@@ -330,7 +329,7 @@ function sieving_primes(M, primes, groups, bound : printlevel := 0)
           MA := sub<A | [M*g : g in Generators(A)]>;
           QA := A/MA;
           if v+1 lt #QA*bound then
-             if printlevel gt 0 then <v, FactoredOrder(A), (v+1.)/#QA>; end if;
+            vprintf QCMod: "%o\n", <v, FactoredOrder(A), (v+1.)/#QA>;
             Append(~s_primes, v);
             Append(~quots, (v+1.)/#QA);
           end if;

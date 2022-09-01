@@ -488,7 +488,7 @@ function res_alpha_int_beta_weierstrass(D1, D2, data, N, local_coords : alphas :
 end function;
 
 
-function res_alpha_int_beta_non_weierstrass(D1, D2, data, cycl_data : N := 0, printlevel := 0);
+function res_alpha_int_beta_non_weierstrass(D1, D2, data, cycl_data : N := 0);
 
   /*
         Returns sum(res(alpha*(int(beta) + c))) where c is the right constant of integration
@@ -509,8 +509,7 @@ function res_alpha_int_beta_non_weierstrass(D1, D2, data, cycl_data : N := 0, pr
         - Q and S are in distinct disks
   */
   p := data`p; Q := data`Q; g := data`g;
-  if IsZero(N) then N := data`N; end if;;
-  pl := printlevel;        
+  if IsZero(N) then N := data`N; end if;
   f := -ConstantCoefficient(Q); // Hyperell poly
   Qp := pAdicField(p, N);
   Nmin := N;
@@ -583,13 +582,13 @@ function res_alpha_int_beta_non_weierstrass(D1, D2, data, cycl_data : N := 0, pr
       end if; // lie_in_same_disk(Q, S, data) 
     end if; // xQ ne 0
   end for;  // triple in pth_rts_Q 
-  if pl gt 1 then "I1 = ",integrals[1]; end if;
-  if pl gt 1 then "I2 = ",integrals[2]; end if;
+  vprintf QCMod, 2: "I1 = %o\n", integrals[1];
+  vprintf QCMod, 2: "I2 = %o\n", integrals[2];
   return integrals[1] - integrals[2], Nmin;
 end function;
  
 
-function omega_integral(D1, D2, data : N := 0, wlcs := [**], alphas := [**], cycl_data := [**], printlevel := 0)
+function omega_integral(D1, D2, data : N := 0, wlcs := [**], alphas := [**], cycl_data := [**])
   /*
         Coleman integral of omega, in the notation of Balakrishnan-Besser,
         ``Coleman-Gross height pairings and the p-adic sigma function,'' IMRN 2012
@@ -598,21 +597,20 @@ function omega_integral(D1, D2, data : N := 0, wlcs := [**], alphas := [**], cyc
   Q := data`Q; p := data`p; g := data`g;
   if IsZero(N) then N := data`N; end if;
   f := -ConstantCoefficient(data`Q); // Hyperell poly
-  P := D1[1,1]; Q := D1[2,1]; R := D2[1,1]; S := D2[2,1]; 
-  pl := printlevel;
+  P := D1[1,1]; Q := D1[2,1]; R := D2[1,1]; S := D2[2,1];
 
   if lie_in_same_disk(R, S, data) then
-    if pl gt 1 then printf "Points in %o lie in same disk -- problem here?\n", D2; end if;
+    vprintf QCMod, 2: "Points in %o lie in same disk -- problem here?\n", D2;
     xtSR, ytSR := local_analytic_interpolation(S,R,5*N+10,data);
     diffS := diff_D(D1, xtSR, ytSR, data);
     int_diffS := Integral(diffS);
-    if pl gt 1 then printf "omega_integral = %o\n\n", Evaluate(int_diffS, 1); end if;
+    vprintf QCMod, 2: "omega_integral = %o\n\n", Evaluate(int_diffS, 1);
     return Evaluate(int_diffS, 1), wlcs, alphas, cycl_data;
   end if; 
 
   FR := frobenius_pt(R, data);
   // 
-  if pl gt 2 then printf "Compute integral from R to FR.\n"; end if;
+  vprintf QCMod, 3: "Compute integral from R to FR.\n";
   R_to_FR := 0;  
   NRFR := N;
   if R`x ne FR`x or R`b ne FR`b then
@@ -652,9 +650,9 @@ function omega_integral(D1, D2, data : N := 0, wlcs := [**], alphas := [**], cyc
     end if;  // not &or[lie_in_same_disk(R,pt,data) : pt in [P,Q]] 
     NRFR := Min(N, tadicprecR);
   end if;  // R`x ne FR`x or R`b ne FR`b 
-  if pl gt 1 then printf "Integral from R to FR is %o.\n", R_to_FR; end if;
+  vprintf QCMod, 2: "Integral from R to FR is %o.\n", R_to_FR;
 
-  if pl gt 2 then printf "Compute integral from FS to S.\n"; end if;
+  vprintf QCMod, 3: "Compute integral from FS to S.\n";
   FS := frobenius_pt(S, data);
   FS_to_S := 0;  
   NFSS := N;
@@ -675,11 +673,11 @@ function omega_integral(D1, D2, data : N := 0, wlcs := [**], alphas := [**], cyc
       error "This case is not implemented yet";
     end if;
   end if; // S`x ne FS`x or S`b ne FS`b then
-  if pl gt 1 then printf "Integral from FS to S is %o.\n", FS_to_S; end if;
+  vprintf QCMod, 2: "Integral from FS to S is %o.\n", FS_to_S;
  
 
 
-  if pl gt 2 then printf "\nCompute sum of residues of alpha*int(beta) at non-Weierstrass points.\n"; end if;
+  vprintf QCMod, 3: "\nCompute sum of residues of alpha*int(beta) at non-Weierstrass points.\n";
   // First try with low precision, increase if insufficient
   added_prec := 0;
   if #cycl_data eq 0 then 
@@ -693,7 +691,7 @@ function omega_integral(D1, D2, data : N := 0, wlcs := [**], alphas := [**], cyc
       if pth_rts_P[1,3] eq [*0,0*] and P`x ne 0 then
         for i in [1.. #pth_rts_P] do
           //Find interpolation between P and pth_rts_P[i,1] and add to pth_rts_P
-          if pl gt 3 then printf "Find interpolation between %o and %o.\n", P, pth_rts_P[i,1]; end if;
+          vprintf QCMod, 4: "Find interpolation between %o and %o.\n", P, pth_rts_P[i,1];
           d := AbsoluteDegree(Parent(pth_rts_P[i,1]`x));
           xtPPp, ytPPp := local_analytic_interpolation_cyclotomic(P, pth_rts_P[i,1], d*N + added_prec, data);
           pth_rts_P[i,3] := [*xtPPp, ytPPp*];
@@ -702,24 +700,24 @@ function omega_integral(D1, D2, data : N := 0, wlcs := [**], alphas := [**], cyc
       if pth_rts_Q[1,3] eq [*0,0*] and Q`x ne 0 then
         for i in [1.. #pth_rts_Q] do
           //Find interpolation between Q and pth_rts_Q[i,1] and add to pth_rts_Q
-          if pl gt 3 then printf "Find interpolation between %o and %o.\n", Q, pth_rts_Q[i,1]; end if;
+          vprintf QCMod, 4: "Find interpolation between %o and %o.\n", Q, pth_rts_Q[i,1];
           d := AbsoluteDegree(Parent(pth_rts_Q[i,1]`x));
           xtQQp, ytQQp := local_analytic_interpolation_cyclotomic(Q, pth_rts_Q[i,1], d*N + added_prec, data);
           pth_rts_Q[i,3] := [*xtQQp, ytQQp*];
         end for;
       end if;
       cycl_data := [pth_rts_P, pth_rts_Q];
-      res_alpha_int_beta_nw, Nresnw := res_alpha_int_beta_non_weierstrass(D1, D2, data, cycl_data : printlevel := pl);
+      res_alpha_int_beta_nw, Nresnw := res_alpha_int_beta_non_weierstrass(D1, D2, data, cycl_data);
     catch e
-      if pl gt 1 then e; end if;
+      vprintf QCMod, 2: "%o\n", e;
       added_prec +:= p;
-      if pl gt 1 then "insufficient_precision", d*N+added_prec-p; "Try precision", d*N+added_prec; end if;
+      vprintf QCMod, 2: "insufficient_precision %o\nTry precision %o\n", d*N+added_prec-p, d*N+added_prec;
     end try;
   until assigned res_alpha_int_beta_nw;
-  if pl gt 1 then printf "sum of residues of alpha*int(beta) at non-Weierstrass points = %o.\n", res_alpha_int_beta_nw; end if;
+  vprintf QCMod, 2: "sum of residues of alpha*int(beta) at non-Weierstrass points = %o.\n", res_alpha_int_beta_nw;
   Nomega := Min([N, Nresnw, NRFR, NFSS]);
 
-  if pl gt 1 then "sum of residues of alpha*int(beta) at non-Weierstrass points = %o.\n", res_alpha_int_beta_nw; end if;
+  vprintf QCMod, 2: "sum of residues of alpha*int(beta) at non-Weierstrass points = %o.\n", res_alpha_int_beta_nw;
   // 
   // Now residues at Weierstrass points
   // First try with low precision, increase if insufficient
@@ -729,32 +727,32 @@ function omega_integral(D1, D2, data : N := 0, wlcs := [**], alphas := [**], cyc
   repeat 
     try 
       if #wlcs eq 0 or insuff_prec then
-        if pl gt 2 then "Computing local coordinates at Weierstrass points"; end if;
+        vprintf QCMod, 3: "Computing local coordinates at Weierstrass points";
         wlcs := local_coords_weierstrass_points(data, target_padic_prec, weierstrass_prec);
         // Only need Nomega digits.
       end if;
       res_alpha_int_beta, alphas := res_alpha_int_beta_weierstrass(D1, D2, data, 
                                      target_padic_prec, wlcs : alphas := alphas);
     catch e
-      if pl gt 1 then e; end if;
+      vprintf QCMod, 2: "%o\n", e;
       insuff_prec := true;
       weierstrass_prec +:= p;
-      if pl gt 2 then "insufficient_precision", weierstrass_prec-p; "Try precision", weierstrass_prec; end if;
+      vprintf QCMod, 3: "insufficient_precision %o\nTry precision %o\n", weierstrass_prec-p, weierstrass_prec;
     end try;
   until assigned res_alpha_int_beta;
-  if pl gt 1 then printf "sum of residues of alpha*int(beta) at Weierstrass points = %o.\n", res_alpha_int_beta; end if;
+  vprintf QCMod, 2: "sum of residues of alpha*int(beta) at Weierstrass points = %o.\n", res_alpha_int_beta;
 
   res_alpha_int_beta +:= res_alpha_int_beta_nw;
   cups := psiA_cup_psiB(D1, D2, data);
-  if pl gt 1 then printf "psi(A) cup psi(B) = %o.\n", cups; end if;
+  vprintf QCMod, 2: "psi(A) cup psi(B) = %o.\n", cups;
   omega := 1/(1-data`p)*(cups+res_alpha_int_beta-FS_to_S-R_to_FR);
-  if pl gt 1 then printf "omega_integral = %o\n\n", omega; end if;
+  vprintf QCMod, 2: "omega_integral = %o\n\n", omega;
   return omega, wlcs, alphas, cycl_data, Nomega;
 end function;
 
 
 intrinsic local_height_divisors_p(D1::SeqEnum[SeqEnum[Tup]], D2::SeqEnum[SeqEnum[Tup]], data::Rec :
-                                  N := 0, D1_data := 0, printlevel := 0)
+                                  N := 0, D1_data := 0)
   -> FldPadElt, Tup, RngIntElt
   {Compute the local p-adic height pairing at p between two divisors D and E with disjoint support
   on an odd degree hyperelliptic curves over Qp.
@@ -777,7 +775,6 @@ intrinsic local_height_divisors_p(D1::SeqEnum[SeqEnum[Tup]], D2::SeqEnum[SeqEnum
   f := -ConstantCoefficient(Q); // Hyperell poly
   require IsOdd(Degree(f)): "Currently only implemented for odd degree models";
   require IsMonic(f): "Currently only implemented for monic models";
-  pl := printlevel;
   if IsZero(N) then  N := data`N; end if;
   p := data`p;
   basis := data`basis; g := data`g;
@@ -803,9 +800,7 @@ intrinsic local_height_divisors_p(D1::SeqEnum[SeqEnum[Tup]], D2::SeqEnum[SeqEnum
     alphas := IsDefined(all_alphas,i) select all_alphas[i] else [**];
     cycl_data := IsDefined(all_cycl_data,i) select all_cycl_data[i] else [**];
     for E in D2 do
-      if pl gt 2 then 
-        printf "\nComputing local Coleman-Gross height at %o between divisors\n %o\n and\n %o\n", p, D, E;
-      end if;
+      vprintf QCMod, 3: "\nComputing local Coleman-Gross height at %o between divisors\n %o\n and\n %o\n", p, D, E;
       eta := 0; 
       // Compute the integral of the holomorphic differential eta as 
       // in Algorithm 5.9 of BB12
@@ -813,10 +808,10 @@ intrinsic local_height_divisors_p(D1::SeqEnum[SeqEnum[Tup]], D2::SeqEnum[SeqEnum
         col_int_E, Neta := coleman_integrals_on_basis(E[2,1], E[1,1], data);
         eta := &+[diff_log_hol_div1[i] * col_int_E[i] : i in [1..g]];
       end if;
-      if pl gt 0 then print "\n eta = ", eta; end if;
+      vprintf QCMod: "\n eta = %o\n", eta;
       omega, wlcs, alphas, cycl_data, Nomega := omega_integral(D,E,data: N := N, wlcs := wlcs, 
-                            alphas := alphas, cycl_data := cycl_data, printlevel := pl);
-      if pl gt 0 then print "\n omega = ", omega; end if;
+                            alphas := alphas, cycl_data := cycl_data);
+      vprintf QCMod: "\n omega = %o\n", omega;
 
       ht +:= (omega - eta);
       Nht := Min([Nht, Nomega, Neta]);

@@ -249,7 +249,7 @@ end function;
 
 
 function find_qc_primes(X : qc_primes_bound := 100, mws_primes_bound := 1000, ordinary := true, 
-               printlevel := 0, number_of_bad_disks := 0, mws_quot_bd := 10, inf_modp_allowed := true , known_rat_pts := [])
+              number_of_bad_disks := 0, mws_quot_bd := 10, inf_modp_allowed := true , known_rat_pts := [])
   // X is a genus 2 curve over the rationals
   // Find good primes for quadratic Chabauty / Mordell-Weil sieve combination
   //
@@ -285,8 +285,8 @@ function find_qc_primes(X : qc_primes_bound := 100, mws_primes_bound := 1000, or
   prime_quality := [];
   // TODO: Sort in a more meaningful way. 
   for p in qc_primes do
-    if printlevel gt 0 then "p", p; end if;
-    _, quots := sieving_primes(p^10,  good_primes, groups, mws_quot_bd : printlevel := printlevel);
+    vprintf QCMod: "p = %o\n", p;
+    _, quots := sieving_primes(p^10,  good_primes, groups, mws_quot_bd);
     if IsEmpty(quots) then 
       Append(~prime_quality, []);
     else 
@@ -313,7 +313,7 @@ function generators(J)
 end function;
 
 
-function height_init_g2(X, p, free_gens : N := 20, multiple_bound := 50, make_odd_degree := true, printlevel := 0)
+function height_init_g2(X, p, free_gens : N := 20, multiple_bound := 50, make_odd_degree := true)
 
   // Find generators that have good properties at p and compute local Coleman-Gross heights away from p
   // X is a hyperelliptic curve, currently restricted to genus 2

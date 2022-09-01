@@ -17,7 +17,7 @@ for i := 2 to #x0plus_quartics_list do
   // leading coefficients of Taylor expansions should be sufficiently nonzero.
   printf "\nThe rank of J0(%o)+ is %o.", level, r;
   printf "\nStarting quadratic Chabauty for X0(%o)+.\n", level;
-  time success, Cpts, p, Q_inf := QCModQuartic(Q, S : printlevel := 0, N := 20);
+  time success, Cpts, p, Q_inf := QCModQuartic(Q, S : N := 20);
   assert success;
   printf "Finished quadratic Chabauty computation for X0(%o)+.\n", level;
   printf "Defining equation of first affine patch: \n%o.\n", Q;

@@ -37,12 +37,11 @@ function small_rat_pts(Q)
   return rat_pts;
 end function;
 
-function second_affine_patch_modp(Q, p, A, rat_pts : printlevel := 0)
+function second_affine_patch_modp(Q, p, A, rat_pts)
     
   // Find a good second affine patch mod p.
   // We want bad points and (enough) rational points to go to good points 
-  //
-  pl := printlevel;
+
   Fp := GF(p);
   a,b,c,d := Explode(ChangeUniverse(A,Fp)); 
   PFp<x,y> := PolynomialRing(Fp, 2);
@@ -106,7 +105,7 @@ function second_affine_patch_modp(Q, p, A, rat_pts : printlevel := 0)
       Q_modp_trans +:= Fp!Coefficient(Coefficient(Q_modp_trans_dehom, Y,i), X, j)*x^j*y^i;
     end for;
   end for;
-  if pl gt 2 then "transformed Q mod p"; Q_modp_trans; end if;
+  vprintf QCMod, 3: "transformed Q mod p:\n%o\n", Q_modp_trans;
   
   Delta_modp_trans := Discriminant(Q_modp_trans);
   r_modp_trans := Numerator(Delta_modp_trans/GCD(Delta_modp_trans,Derivative(Delta_modp_trans)));
@@ -118,14 +117,14 @@ function second_affine_patch_modp(Q, p, A, rat_pts : printlevel := 0)
     //ram_pts_trans cat:= [C_Q_trans![branch_pts_trans[i], -Evaluate(t[1],0),1]  : t in branch_lifted_fact_trans[i] | t[2] gt 1];
     ram_pts_trans cat:= [C_Q_trans![branch_pts_trans[i], -Evaluate(t[1],0),1]  : t in branch_lifted_fact_trans[i]];
   end for; 
-  if pl gt 3 then "bad points get mapped to"; transformed_bad_pts; end if;
-  if pl gt 3 then "rational points get mapped to"; transformed_rat_pts_modp; end if;
+  vprintf QCMod, 4: "bad points get mapped to\n%o\n", transformed_bad_pts;
+  vprintf QCMod, 4: "rational points get mapped to\n%o\n", transformed_rat_pts_modp;
   C_Q_pts_trans := Points(C_Q_trans);
   inf_pts_trans := [P: P in C_Q_pts_trans | P[3] eq 0 ];
   bad_pts_trans := ram_pts_trans cat inf_pts_trans;
   number_of_good_rat_pts_trans := #[P : P in transformed_rat_pts_modp | P notin bad_pts_trans]; 
   assert number_of_good_rat_pts_trans ge 3;
-  if pl gt 2 then "bad points of transformed curve"; bad_pts_trans; end if;
+  vprintf QCMod, 3: "bad points of transformed curve\n%o\n", bad_pts_trans;
   bad := [P : P in transformed_bad_pts | P in bad_pts_trans];
   //"bad", bad;
   //bad cat:= [P : P in transformed_inf_pts | P[3] eq 0];
@@ -136,12 +135,11 @@ function second_affine_patch_modp(Q, p, A, rat_pts : printlevel := 0)
 end function;
 
 intrinsic SecondAffinePatch(Q::RngUPolElt[RngUPol], p::RngIntElt :
-                            printlevel := 0, bd:=p-1, max_inf_deg := 0)
+                            bd:=p-1, max_inf_deg := 0)
   -> RngUPolElt[RngUPol], SeqEnum[RngElt]
   {Given an affine patch of a smooth plane quartic, finds a second patch so that running quadratic
   Chabauty on both suffices to provably find the rational points on the projective model.}
 
-  pl := printlevel;
   y := Parent(Q).1;
   x := BaseRing(Parent(Q)).1;
   K := BaseRing(BaseRing(Q));
@@ -173,7 +171,7 @@ intrinsic SecondAffinePatch(Q::RngUPolElt[RngUPol], p::RngIntElt :
   heights := [];
   for c0,a0,d0,b0 in [0..bd] do 
     try 
-      bool, Ap := second_affine_patch_modp(Q, p, [a0,b0,c0,d0], rat_pts : printlevel := pl);
+      bool, Ap := second_affine_patch_modp(Q, p, [a0,b0,c0,d0], rat_pts);
       if not bool then continue; end if;
     catch e
       continue;
@@ -229,9 +227,9 @@ intrinsic SecondAffinePatch(Q::RngUPolElt[RngUPol], p::RngIntElt :
           discard := true;
         end if;
       end if; // max_inf_deg gt 0
-      
+
       if not discard then
-        if pl gt 1 then "\nSmallest transformation found has max coeff size ", height; ;end if;
+        vprintf QCMod, 2: "\nSmallest transformation found has max coeff size %o\n", height;
         min_height := height;
         min_ht_Q_trans := Q_trans;
         min_A := A;
