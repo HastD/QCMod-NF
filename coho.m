@@ -1,6 +1,6 @@
 freeze;
 
-mat_W0:=function(Q)
+function mat_W0(Q)
   // Compute the matrix W0 using MaximalOrderFinite
   K := BaseRing(BaseRing(Q));
   Kt := RationalFunctionField(K);
@@ -10,7 +10,7 @@ mat_W0:=function(Q)
   return Matrix(Kt, d, d, [[Eltseq(L!b0[i])[j] : j in [1..d]] : i in [1..d]]);
 end function;
 
-mat_Winf:=function(Q);
+function mat_Winf(Q)
   // Compute the matrix Winf using MaximalOrderFinite
   K := BaseRing(BaseRing(Q));
   Kt := RationalFunctionField(K);
@@ -25,7 +25,7 @@ mat_Winf:=function(Q);
 end function;
 
 
-ddx:=function(f)
+function ddx(f)
 
   // Differentiate polynomial f(x)(y) with respect to x.
 
@@ -37,7 +37,7 @@ ddx:=function(f)
 end function;
 
 
-ddx_mat:=function(A)
+function ddx_mat(A)
 
   // Differentiate matrix of rational functions.
 
@@ -50,7 +50,7 @@ ddx_mat:=function(A)
 end function;
 
 
-ddx_vec:=function(v)
+function ddx_vec(v)
 
   // Differentiate vector of rational functions.
 
@@ -61,7 +61,7 @@ ddx_vec:=function(v)
 end function;
 
 
-reduce_mod_Q_exact:=function(f,Q)
+function reduce_mod_Q_exact(f,Q)
 
   // Eliminate powers of y >= d_x.
 
@@ -72,7 +72,7 @@ reduce_mod_Q_exact:=function(f,Q)
 end function;
 
 
-polys_to_vec:=function(polys,degx);
+function polys_to_vec(polys,degx)
 
   // Converts a sequence of polynomials to a vector  
 
@@ -95,8 +95,7 @@ polys_to_vec:=function(polys,degx);
 end function;
 
 
-
-ram:=function(J0,Jinf)
+function ram(J0,Jinf)
 
   // Return the maximum finite and infinite ramification
   // indices, given the matrices J0, Jinf.
@@ -125,7 +124,7 @@ ram:=function(J0,Jinf)
 end function;
 
 
-con_mat:=function(Q,Delta,s)
+function con_mat(Q,Delta,s)
 
   // Compute the matrix G.
 
@@ -157,7 +156,7 @@ con_mat:=function(Q,Delta,s)
 end function;
 
 
-jordan_inf:=function(Ginf)
+function jordan_inf(Ginf)
 
   // Compute Jordan form of residue matrix at infinity
 
@@ -167,7 +166,7 @@ jordan_inf:=function(Ginf)
 end function;
 
 
-jordan_0:=function(r,G0)
+function jordan_0(r,G0)
 
   // Compute Jordan forms of residue matrices at finite points
   K := BaseRing(r);
@@ -194,7 +193,7 @@ jordan_0:=function(r,G0)
 end function;
 
 
-ord_0:=function(f)
+function ord_0(f)
 
   // Compute ord_0(f), where f is a rational function.
 
@@ -202,13 +201,13 @@ ord_0:=function(f)
 end function;
 
 
-ord_0_mat:=function(A)
+function ord_0_mat(A)
   // Compute ord_0(A), where A is a matrix of rational functions.
   return Minimum([ord_0(a) : a in Eltseq(A)]);
 end function;
 
 
-ord_r:=function(f,r)
+function ord_r(f,r)
 
   // Compute ord_r(f), where f is a rational function
 
@@ -223,25 +222,25 @@ ord_r:=function(f,r)
 end function;
 
 
-ord_r_mat:=function(A,r)
+function ord_r_mat(A,r)
   // Compute ord_r(A), where A is matrix of rational functions
   return Minimum([ord_r(a, r) : a in Eltseq(A)]);
 end function;
 
 
-ord_inf:=function(f)
+function ord_inf(f)
   // Compute ord_inf(f), where f is a rational function.
   return -Degree(Numerator(f))+Degree(Denominator(f));
 end function;
 
 
-ord_inf_mat:=function(A);
+function ord_inf_mat(A)
   // Compute ord_inf(A), where A is a matrix of rational functions.
   return Minimum([ord_inf(a) : a in Eltseq(A)]);
 end function;
 
 
-res_0:=function(w,Q,r,J0,T0inv)
+function res_0(w,Q,r,J0,T0inv)
 
   // Compute res_0(\sum w_i b^0_i dx/r).
 
@@ -271,13 +270,13 @@ res_0:=function(w,Q,r,J0,T0inv)
 end function;
 
 
-val_Kttinv_d:=function(v)
+function val_Kttinv_d(v)
   // Compute the valuation of an element of K[t,1/t]^d.
   return Minimum([Valuation(c) : c in Eltseq(v)]);
 end function;
 
 
-res_inf:=function(w,Q,r,W0,Winf,Ginf,Jinf,Tinfinv)
+function res_inf(w,Q,r,W0,Winf,Ginf,Jinf,Tinfinv)
 
   // Compute res_inf(\sum w_i b^0_i dx/r).
 
@@ -330,8 +329,8 @@ res_inf:=function(w,Q,r,W0,Winf,Ginf,Jinf,Tinfinv)
 end function;
 
 
-basis_coho:=function(Q,p,r,W0,Winf,G0,Ginf,J0,Jinf,T0inv,Tinfinv,useU,basis0,basis1,basis2)
-  
+function basis_coho(Q,v,r,W0,Winf,G0,Ginf,J0,Jinf,T0inv,Tinfinv,useU,basis0,basis1,basis2)
+
   // Compute a basis for H^1(X).
   K := BaseRing(BaseRing(Q));
   Kx<x>:=PolynomialRing(K);
@@ -527,12 +526,12 @@ basis_coho:=function(Q,p,r,W0,Winf,G0,Ginf,J0,Jinf,T0inv,Tinfinv,useU,basis0,bas
     dim:=dimH1X;
   end if;
 
-  p_rat := Factorization(Norm(p))[1][1];
-  vp := Valuation(K!p_rat, p);
+  p := Factorization(Norm(v))[1][1];
+  vp := Valuation(K!p, v);
   for i:=1 to dim do
-    valdenom := Minimum([Valuation(b[i][j], p)/vp : j in [1 .. dimE0]]);
+    valdenom := Minimum([Valuation(b[i][j], v)/vp : j in [1 .. dimE0]]);
     if valdenom lt 0 then
-      b[i] *:= p_rat^(Ceiling(-valdenom));
+      b[i] *:= p^(Ceiling(-valdenom));
     end if;
   end for; 
 

@@ -1,6 +1,6 @@
 freeze;
 
-auxpolys:=function(Q);
+function auxpolys(Q)
 
   // Compute the polynomials r,Delta,s.
 
@@ -97,7 +97,7 @@ function smooth(f,p)
   return (Degree(fmodp) eq Degree(f) and IsSeparable(fmodp));
 end function;
 
-log:=function(p,x)
+function log(p,x)
   if x gt 0 then
     return Log(p,x);
   else
