@@ -1,20 +1,21 @@
 freeze;
 
 import "coho.m": ord_r_mat;
+import "reductions.m": reduce_mod_vN;
 
-getrings:=function(p,N)
+function getrings(v,N)
 
   // Construct rings mod p^N.
 
-  O:=IntegerRing(p^N);
+  red, O := reduce_mod_vN(v, N);
   Ox<x>:=PolynomialRing(O);
   S<z>:=LaurentSeriesRing(Ox); // z=r
   R<y>:=PolynomialRing(S);
-  return O,Ox,S,R;
+  return O,red,Ox,S,R;
 end function;
 
 
-radix_reduce:=function(f,r); 
+function radix_reduce(f,r)
 
   // Eliminate powers of x >= deg(r) in f.
   
@@ -43,7 +44,7 @@ radix_reduce:=function(f,r);
 end function;
 
 
-reduce_mod_Q:=function(f,Q,r); 
+function reduce_mod_Q(f,Q,r)
 
   // Eliminate powers of y >= deg(Q) in f.
   
@@ -60,7 +61,7 @@ reduce_mod_Q:=function(f,Q,r);
 end function;
 
 
-xpforx:=function(f,xp,r) 
+function xpforx(f,xp,r) 
 
   // Substitute x^p for x in an element of R (without any z).
 
@@ -97,7 +98,7 @@ xpforx:=function(f,xp,r)
 end function;
 
 
-pow:=function(f,n,Q,r);
+function pow(f,n,Q,r)
 
   // Computes f^n for an element f in R
 
@@ -125,58 +126,50 @@ pow:=function(f,n,Q,r);
   
 end function;
 
-
-froblift:=function(Q,p,N,r,Delta,s,W0);
+function froblift(Q,v,N,r,Delta,s,W0)
 
   // 1) Compute matrix of F_p on R w.r.t. basis [y^i]
 
-  O,Ox,S,R:=getrings(p,N);
+  p := Factorization(Norm(v))[1][1];
+  O,red,Ox,S,R:=getrings(v,N);
   x:=Ox.1; y:=R.1; z:=S.1;
 
   d:=Degree(Q);
 
-  C:=[];
-  for i:=1 to d+1 do
-    C[i]:=Ox!(Coefficient(Q,i-1));
-  end for;
-  Q:=(R!C);
+  Q := R![Ox![red(c) : c in Eltseq(Coefficient(Q, i))] : i in [0 .. d]];
 
   rQx:=Parent(Numerator(W0[1,1]))!r;
   rQx:=rQx/LeadingCoefficient(rQx);
 
-  r:=(Ox!Coefficients(r));
-  Delta:=(Ox!Coefficients(Delta));
+  r := Ox![red(c) : c in Coefficients(r)];
+  Delta := Ox![red(c) : c in Coefficients(Delta)];
 
-  C:=[];
-  for i:=1 to Degree(s)+1 do
-    C[i]:=Ox!(Coefficient(s,i-1));
-  end for;
-  s:=(R!C);
-  lc:=LeadingCoefficient(r);
-  r:=r/lc;
-  s:=s/lc;
-  Delta:=Delta/lc; 
+  s := R![Ox![red(c) : c in Eltseq(Coefficient(s, i))] : i in [0 .. Degree(s)]];
+  lc := LeadingCoefficient(r);
+  r /:= lc;
+  s /:= lc;
+  Delta /:= lc; 
 
   cnt:=1;
   while (r^cnt mod Delta ne 0) do
-    cnt:=cnt+1;
+    cnt +:= 1;
   end while;
   g:=r^cnt div Delta;
 
   prec:=[];
   k:=N;
   while k gt 1 do
-    prec:=Append(prec,k);
+    Append(~prec,k);
     k:=Ceiling(k/2);
   end while;
-  prec:=Reverse(prec);
+  Reverse(~prec);
 
   alpha:=R!(z^(-p));
   beta:=pow(y,p,Q,r);
   xp:=pow(R!x,p,Q,r);	
 
   for i:=1 to #prec do
-    Oi,Oxi,Si,Ri:=getrings(p,prec[i]);
+    Oi,redi,Oxi,Si,Ri:=getrings(v,prec[i]);
     xpi:=Ri!xp;				
     rxp:=xpforx(Ri!(Oxi!r),xpi,r);
     alpha:=(Ri!alpha); 							
@@ -199,12 +192,12 @@ froblift:=function(Q,p,N,r,Delta,s,W0);
     sxp:=xpforx(Ri!s,xpi,r); 								
     evalQxp:=Ri!0;
     for j:=0 to d do
-      evalQxp:=evalQxp+Coefficient(Qxp,j)*powers[j+1];
+      evalQxp +:= Coefficient(Qxp,j)*powers[j+1];
     end for;
     evalQxp:=radix_reduce(evalQxp,r);
     evalsxp:=Ri!0;
     for j:=0 to Degree(s) do
-      evalsxp:=evalsxp+Coefficient(sxp,j)*powers[j+1];
+      evalsxp +:= Coefficient(sxp,j)*powers[j+1];
     end for;
     evalsxp:=radix_reduce(evalsxp,r);
 
@@ -215,9 +208,10 @@ froblift:=function(Q,p,N,r,Delta,s,W0);
 
   // (slow) optional tests:
   // ----------------------
-  //radix_reduce(alpha*xpforx(R!(Ox!r),xp,r),r) eq 1;          
-  //radix_reduce(alpha1*xpforx(R!(Ox!Delta),xp,r),r) eq 1;     
-  //reduce_mod_Q(Evaluate(xpforx(R!Q,xp,r),beta),R!Q,r) eq 0;  
+  assert radix_reduce(alpha*xpforx(R!(Ox!r),xp,r),r) eq 1;          
+  assert radix_reduce(alpha1*xpforx(R!(Ox!Delta),xp,r),r) eq 1;     
+  assert reduce_mod_Q(Evaluate(xpforx(R!Q,xp,r),beta),R!Q,r) eq 0;  
+  // end optional tests
 
   alpha:=(R!alpha);
   beta:=(R!beta);
@@ -274,34 +268,34 @@ froblift:=function(Q,p,N,r,Delta,s,W0);
 end function;
 
 
-frobenius:=function(w,Q,p,N,r,frobmatb0r)
+function frobenius(w,Q,v,N,r,frobmatb0r)
 
   // Compute F_p(sum w_i b^0_i dx/r) mod p^N.
 
-  O,Ox,S,R:=getrings(p,N-1);
+  O,red,Ox,S,R:=getrings(v,N-1);
+  p := Norm(v);
   x:=Ox.1; y:=R.1; z:=S.1;
   
   d:=Degree(Q);
-  Q:=R!Q;
+  Qred := R![Ox![red(c) : c in Eltseq(Coefficient(Q, i))] : i in [0 .. d]];
 
   Sd:=RSpace(S,d);
 
-  r:=(Ox!Coefficients(r)); 
-  lc:=LeadingCoefficient(r);
-  r:=r/lc;
+  rred := Ox![red(c) : c in Coefficients(r)];
+  rred /:= LeadingCoefficient(rred);
 
-  xp_minus_one:=pow(R!(Ox!x),p-1,Q,r);		   
-  xp:=radix_reduce(xp_minus_one*(R!(Ox!x)),r); 
+  xp_minus_one:=pow(R!(Ox!x),p-1,Qred,rred);		   
+  xp:=radix_reduce(xp_minus_one*(R!(Ox!x)),rred);
 
   frob:=Sd!0;
   for i:=1 to d do
-    temp:=radix_reduce((xp_minus_one)*xpforx(R!(Ox!Coefficients(w[i])),xp,r),r);
+    temp:=radix_reduce((xp_minus_one)*xpforx(R!(Ox![red(c) : c in Coefficients(w[i])]),xp,rred),rred);
     for j:=1 to d do
-      frob[j]:=Coefficient(radix_reduce(frob[j]+frobmatb0r[i,j]*temp,r),0);
+      frob[j]:=Coefficient(radix_reduce(frob[j]+frobmatb0r[i,j]*temp,rred),0);
     end for;
   end for;
 
-  O,Ox,S,R:=getrings(p,N);
+  O,red,Ox,S,R:=getrings(v,N);
   Sd:=RSpace(S,d); 
   frob:=p*(Sd!frob); 
 

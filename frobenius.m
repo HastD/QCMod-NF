@@ -7,7 +7,7 @@ freeze;
 import "auxpolys.m": log;
 import "coho.m": ord_inf_mat;
 import "froblift.m": frobenius, getrings, radix_reduce, reduce_mod_Q;
-import "reductions.m": change_basis_b0binf, convert_to_Qxzzinvd, reduce_with_fs;
+import "reductions.m": change_basis_b0binf, convert_to_Kxzzinvd, reduce_with_fs;
 import "misc.m": compute_F, eval_R, fun_field, Qxzzinvd_to_R;
 
 
@@ -29,7 +29,7 @@ intrinsic FrobeniusStructure(data::Rec, Z::AlgMatElt, eta::ModTupFldElt, bpt::Se
 
   d:=Degree(Q); lc:=LeadingCoefficient(Delta);
 
-  O,Ox,S,R:=getrings(p,Nmax); 
+  O,red,Ox,S,R:=getrings(p,Nmax); 
   // O = IntegerRing(p^Nmax), Ox = O[x], S = Ox[z,1/z], R = S[y]
 
   W0inv:=W0^(-1); // By assumption, W0 and W0inv are p-integral; same for LC(r)
@@ -196,7 +196,7 @@ intrinsic FrobeniusStructure(data::Rec, Z::AlgMatElt, eta::ModTupFldElt, bpt::Se
   phiomegaZf:=Vector(Coefficients(phiomegaZf));
 
   // Compute c and h
-  chi:=convert_to_Qxzzinvd(phiomegaZf+phi_eta-g0omega,Q);
+  chi:=convert_to_Kxzzinvd(phiomegaZf+phi_eta-g0omega,Q);
   c,h0,hinf,hend,minf:=reduce_with_fs(chi,Q,p,N,Nmax,r,W0,Winf,G0,Ginf,red_list_fin,red_list_inf,basis,integrals,quo_map); 
   hR:=Qxzzinvd_to_R(compute_F(Q,W0,Winf,h0,hinf,hend),Q,p,r,R,W0);
   hR:=reduce_mod_Q(hR,QR,zR);

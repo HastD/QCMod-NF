@@ -2,22 +2,18 @@ freeze;
 
 import "auxpolys.m": auxpolys, genus, is_integral, log, smooth;
 import "coho.m": ord_0_mat, ord_inf_mat, mat_W0, mat_Winf, con_mat, ddx_mat, jordan_inf, jordan_0, ram, basis_coho;
+import "reductions.m": convert_to_Kxzzinvd, reduce_with_fs, red_lists;
 import "froblift.m": frobenius, froblift, getrings;
-import "reductions.m": convert_to_Qxzzinvd, reduce_with_fs, red_lists;
 
-Qx<x>:=PolynomialRing(RationalField());
-Qxy<y>:=PolynomialRing(Qx);
-
-max_prec:=function(Q,p,N,g,W0,Winf,e0,einf);
+function max_prec(d,p,N,g,W0,Winf,e0,einf)
 
   // Compute the p-adic precision required for provable correctness
 
-  d:=Degree(Q);
   W:=Winf*W0^(-1);
   
   Nmax:=N+Floor(log(p,-p*(ord_0_mat(W)+1)*einf));
   while (Nmax-Floor(log(p,p*(Nmax-1)*e0))-Floor(log(p,-(ord_inf_mat(W^(-1))+1)*einf)) lt N) do 
-    Nmax:=Nmax+1;
+    Nmax +:= 1;
   end while;
 
   Nmax:=Maximum(Nmax,2); 
@@ -26,29 +22,30 @@ max_prec:=function(Q,p,N,g,W0,Winf,e0,einf);
 end function;
 
 
-frobmatrix:=function(Q,p,N,Nmax,g,r,W0,Winf,G0,Ginf,frobmatb0r,red_list_fin,red_list_inf,basis,integrals,quo_map);
+function frobmatrix(Q,v,N,Nmax,g,r,W0,Winf,G0,Ginf,frobmatb0r,red_list_fin,red_list_inf,basis,integrals,quo_map)
 
   // Compute the matrix of F_p on H^1(X) mod p^N with respect to 'basis'.
 
-  F:=ZeroMatrix(Rationals(),#basis,#basis);  
+  K := BaseRing(BaseRing(Q));
+  F := ZeroMatrix(K, #basis, #basis);  
   f0list:=[];
   finflist:=[];
   fendlist:=[];
 
   for i:=1 to #basis do
 
-    dif:=frobenius(basis[i],Q,p,Nmax,r,frobmatb0r);
-    dif:=convert_to_Qxzzinvd(dif,Q);
+    dif:=frobenius(basis[i],Q,v,Nmax,r,frobmatb0r);
+    dif:=convert_to_Kxzzinvd(dif,Q);
 
-    coefs,f0,finf,fend:=reduce_with_fs(dif,Q,p,N,Nmax,r,W0,Winf,G0,Ginf,red_list_fin,red_list_inf,basis,integrals,quo_map);
+    coefs,f0,finf,fend:=reduce_with_fs(dif,Q,v,N,Nmax,r,W0,Winf,G0,Ginf,red_list_fin,red_list_inf,basis,integrals,quo_map);
 
     for j:=1 to #basis do
       F[i,j]:=coefs[j];
     end for;
     
-    f0list:=Append(f0list,f0);
-    finflist:=Append(finflist,finf);
-    fendlist:=Append(fendlist,fend);
+    Append(~f0list,f0);
+    Append(~finflist,finf);
+    Append(~fendlist,fend);
 
   end for;
  
@@ -57,17 +54,17 @@ frobmatrix:=function(Q,p,N,Nmax,g,r,W0,Winf,G0,Ginf,frobmatb0r,red_list_fin,red_
 end function;
 
 
-intrinsic H1Basis(Q::RngUPolElt[RngUPol], p::RngOrdIdl)
+intrinsic H1Basis(Q::RngUPolElt[RngUPol], v::RngOrdIdl)
   -> SeqEnum[ModTupRngElt[RngUPol]], RngIntElt, RngUPolElt, AlgMatElt[FldFunRat]
   {Compute a basis for H^1(X).}
   K := BaseRing(BaseRing(Q));
   OK := Integers(K);
-  require Order(p) eq OK and IsPrime(p): "p must be a prime ideal of K.";
+  require Order(v) eq OK and IsPrime(v): "v must be a prime ideal of K.";
 
   require IsIrreducible(Q): "Curve is not irreducible";
 
   d:=Degree(Q);
-  g:=genus(Q, p);
+  g:=genus(Q, v);
   r,Delta,s:=auxpolys(Q);
 
   W0:=mat_W0(Q);
@@ -76,10 +73,10 @@ intrinsic H1Basis(Q::RngUPolElt[RngUPol], p::RngOrdIdl)
   Winfinv:=Winf^(-1);
   W:=Winf*W0^(-1);
 
-  require not (LeadingCoefficient(Delta)*OK subset p): "Bad prime";
+  require not (LeadingCoefficient(Delta)*OK subset v): "Bad prime";
   require Degree(r) ge 1: "Bad prime";
-  require smooth(r, p): "Bad prime";
-  require is_integral(W0, p) and is_integral(W0inv, p) and is_integral(Winf, p) and is_integral(Winfinv, p): "Bad prime";
+  require smooth(r, v): "Bad prime";
+  require is_integral(W0, v) and is_integral(W0inv, v) and is_integral(Winf, v) and is_integral(Winfinv, v): "Bad prime";
 
   G:=con_mat(Q,Delta,s);
   G0:=W0*Evaluate(G,Parent(W0[1,1]).1)*W0^(-1)+ddx_mat(W0)*W0^(-1);
@@ -88,7 +85,7 @@ intrinsic H1Basis(Q::RngUPolElt[RngUPol], p::RngOrdIdl)
   Jinf,Tinf,Tinfinv:=jordan_inf(Ginf);
   J0,T0,T0inv:=jordan_0(r,G0);
 
-  basis:=basis_coho(Q,p,r,W0,Winf,G0,Ginf,J0,Jinf,T0inv,Tinfinv,false,[],[],[]);
+  basis:=basis_coho(Q,v,r,W0,Winf,G0,Ginf,J0,Jinf,T0inv,Tinfinv,false,[],[],[]);
   return basis,g,r,W0;
 end intrinsic;
 
@@ -100,26 +97,28 @@ intrinsic H1Basis(Q::RngUPolElt[RngUPol], p::RngIntElt)
     K := RationalsAsNumberField();
     Q := ChangeRing(Q, PolynomialRing(K));
   end if;
-  pri := p*Integers(K);
-  require IsPrime(pri): "p must be prime in the base field K.";
-  basis, g, r, W0 := H1Basis(Q, pri);
+  v := p*Integers(K);
+  require IsPrime(v): "p must be prime in the base field K.";
+  basis, g, r, W0 := H1Basis(Q, v);
   return basis, g, r, W0;
 end intrinsic;
 
-intrinsic ColemanData(Q::RngUPolElt[RngUPol], p::RngOrdIdl, N::RngIntElt :
+intrinsic ColemanData(Q::RngUPolElt[RngUPol], v::RngOrdIdl, N::RngIntElt :
                       useU:=false, basis0:=[], basis1:=[], basis2:=[], heights:=false)
   -> Rec
   {Takes a polynomial Q in two variables x,y over the rationals which is monic in y.
   Returns the Coleman data of (the projective nonsingular model of) the curve defined
-  by Q at p to p-adic precision N.}
+  by Q at v to p-adic precision N.}
   K := BaseRing(BaseRing(Q));
   OK := Integers(K);
-  require Order(p) eq OK and IsPrime(p): "p must be a prime ideal of K.";
+  require Order(v) eq OK and IsPrime(v): "v must be a prime ideal of K.";
+  _, p, n := IsPrimePower(Norm(v));
+  require Norm(v) eq p: "p must split completely in K.";
 
   require IsIrreducible(Q): "Curve is not irreducible";
 
   d:=Degree(Q);
-  g:=genus(Q,p);
+  g:=genus(Q,v);
   r,Delta,s:=auxpolys(Q);
 
   W0:=mat_W0(Q);
@@ -128,10 +127,10 @@ intrinsic ColemanData(Q::RngUPolElt[RngUPol], p::RngOrdIdl, N::RngIntElt :
   Winfinv:=Winf^(-1);
   W:=Winf*W0^(-1);
 
-  require not (LeadingCoefficient(Delta)*OK subset p): "Bad prime";
+  require not (LeadingCoefficient(Delta)*OK subset v): "Bad prime";
   require Degree(r) ge 1: "Bad prime";
-  require smooth(r,p): "Bad prime";
-  require is_integral(W0,p) and is_integral(W0inv,p) and is_integral(Winf,p) and is_integral(Winfinv,p): "Bad prime";
+  require smooth(r,v): "Bad prime";
+  require is_integral(W0,v) and is_integral(W0inv,v) and is_integral(Winf,v) and is_integral(Winfinv,v): "Bad prime";
 
   G:=con_mat(Q,Delta,s);
   G0:=W0*Evaluate(G,Parent(W0[1,1]).1)*W0^(-1)+ddx_mat(W0)*W0^(-1);
@@ -140,24 +139,24 @@ intrinsic ColemanData(Q::RngUPolElt[RngUPol], p::RngOrdIdl, N::RngIntElt :
   Jinf,Tinf,Tinfinv:=jordan_inf(Ginf);
   J0,T0,T0inv:=jordan_0(r,G0);
   e0,einf:=ram(J0,Jinf);
- 
+
   delta:=Floor(log(p,-(ord_0_mat(W)+1)*einf))+Floor(log(p,(Floor((2*g-2)/d)+1)*einf));
 
-  basis,integrals,quo_map:=basis_coho(Q,p,r,W0,Winf,G0,Ginf,J0,Jinf,T0inv,Tinfinv,useU,basis0,basis1,basis2);
-  Nmax:=max_prec(Q,p,N,g,W0,Winf,e0,einf);
+  basis,integrals,quo_map:=basis_coho(Q,v,r,W0,Winf,G0,Ginf,J0,Jinf,T0inv,Tinfinv,useU,basis0,basis1,basis2);
+  Nmax:=max_prec(d,p,N,g,W0,Winf,e0,einf);
 
-  frobmatb0r:=froblift(Q,p,Nmax-1,r,Delta,s,W0);
+  frobmatb0r:=froblift(Q,v,Nmax-1,r,Delta,s,W0);
 
-  red_list_fin,red_list_inf:=red_lists(Q,p,Nmax,r,W0,Winf,G0,Ginf,e0,einf,J0,Jinf,T0,Tinf,T0inv,Tinfinv);
+  red_list_fin,red_list_inf:=red_lists(Q,v,Nmax,r,W0,Winf,G0,Ginf,e0,einf,J0,Jinf,T0,Tinf,T0inv,Tinfinv);
 
-  F,f0list,finflist,fendlist:=frobmatrix(Q,p,N,Nmax,g,r,W0,Winf,G0,Ginf,frobmatb0r,red_list_fin,red_list_inf,basis,integrals,quo_map);
+  F,f0list,finflist,fendlist:=frobmatrix(Q,v,N,Nmax,g,r,W0,Winf,G0,Ginf,frobmatb0r,red_list_fin,red_list_inf,basis,integrals,quo_map);
 
 
   // formatting the output into a record:
 
-  format:=recformat<Q,p,N,g,W0,Winf,r,Delta,s,G0,Ginf,e0,einf,delta,basis,quo_map,integrals,F,f0list,finflist,fendlist,Nmax,red_list_fin,red_list_inf,minpolys,cpm,subspace,ordinary,frobmatb0r>;
+  format:=recformat<Q,v,N,g,W0,Winf,r,Delta,s,G0,Ginf,e0,einf,delta,basis,quo_map,integrals,F,f0list,finflist,fendlist,Nmax,red_list_fin,red_list_inf,minpolys,cpm,subspace,ordinary,frobmatb0r>;
   out:=rec<format|>;
-  out`Q:=Q; out`p:=p; out`N:=N; out`g:=g; out`W0:=W0; out`Winf:=Winf; out`r:=r; out`Delta:=Delta; out`s:=s; out`G0:=G0; out`Ginf:=Ginf; 
+  out`Q:=Q; out`v:=v; out`N:=N; out`g:=g; out`W0:=W0; out`Winf:=Winf; out`r:=r; out`Delta:=Delta; out`s:=s; out`G0:=G0; out`Ginf:=Ginf; 
   out`e0:=e0; out`einf:=einf; out`delta:=delta; out`basis:=basis; out`quo_map:=quo_map; out`integrals:=integrals; out`F:=F; out`f0list:=f0list; 
   out`finflist:=finflist; out`fendlist:=fendlist; out`Nmax:=Nmax; out`red_list_fin:=red_list_fin; out`red_list_inf:=red_list_inf;
   out`frobmatb0r:=frobmatb0r;
@@ -176,9 +175,9 @@ intrinsic ColemanData(Q::RngUPolElt[RngUPol], p::RngIntElt, N::RngIntElt :
     K := RationalsAsNumberField();
     Q := ChangeRing(Q, PolynomialRing(K));
   end if;
-  pri := p*Integers(K);
-  require IsPrime(pri): "p must be prime in the base field K.";
-  return ColemanData(Q, pri, N : useU:=useU, basis0:=basis0, basis1:=basis1, basis2:=basis2, heights:=heights);
+  v := p*Integers(K);
+  require IsPrime(v): "p must be prime in the base field K.";
+  return ColemanData(Q, v, N : useU:=useU, basis0:=basis0, basis1:=basis1, basis2:=basis2, heights:=heights);
 end intrinsic;
 
 function xy_coordinates(P, data)
@@ -328,6 +327,9 @@ minpoly:=function(f1,f2)
   // computes the minimum polynomial of f2 over Q(f1), where
   // f1,f2 are elements of a 1 dimensional function field over Q
 
+  Qx<x>:=PolynomialRing(RationalField());
+  Qxy<y>:=PolynomialRing(Qx);
+
   FF:=Parent(f1);
 
   d:=5;  
@@ -412,6 +414,9 @@ end function;
 update_minpolys:=function(data,inf,index);
 
   // TODO comment
+
+  Qx<x>:=PolynomialRing(RationalField());
+  Qxy<y>:=PolynomialRing(Qx);
 
   Q:=data`Q; W0:=data`W0; Winf:=data`Winf; 
   d:=Degree(Q);
@@ -2155,11 +2160,11 @@ end function;
 
 function to_Qxzzinvd(w, data)
   Q := data`Q; p := data`p; N := data`N;
-  O,Ox,S,R:=getrings(p,N);
+  O,red,Ox,S,R:=getrings(p,N);
   d := Degree(Q);
   w1 := RSpace(S,d)!0;
   for i:=1 to d do
     w1[i] := R!(Ox!Coefficients(w[i]));
   end for;
-  return convert_to_Qxzzinvd(w1, Q);
+  return convert_to_Kxzzinvd(w1, Q);
 end function;
