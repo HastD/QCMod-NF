@@ -57,5 +57,6 @@ sympl_basis2 := [h1basis[i] : i in [1..g]] cat new_complementary_basis2;
 assert CupProductMatrix(sympl_basis1, Q, g, r, W0 : prec := prec, split := true) eq standard_sympl_mat;
 assert CupProductMatrix(sympl_basis2, Q, g, r, W0 : prec := prec, split := false) eq standard_sympl_mat;
 assert cpm1 eq cpm2;
+assert &and[&and[Valuation(c, v) ge 0 : c in Coefficients(w[1])] : w in sympl_basis1];
 
 printf "symplectic_basis.m tests done.\n";
