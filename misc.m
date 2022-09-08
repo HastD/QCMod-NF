@@ -52,6 +52,19 @@ function lindepQp(a)
   return -(QQ!Coefficient(px,0))/(QQ!Coefficient(px,1));
 end function;
 
+function alg_approx_Qp(a_Qp, v)
+  // Find K-approximation of a_Qp, where v|p is a split prime of K
+  K := NumberField(Order(v));
+  n := Degree(K);
+  Kv, loc := Completion(K, v);
+  Qp := Parent(a_Qp);
+  poly := ChangeRing(algdepQp(a_Qp, n), K);
+  // List of all roots in K of the algebraic dependence satisfied by a_Qp
+  alist := [-Coefficient(fac[1], 0)/Coefficient(fac[1], 1) : fac in Factorization(poly) | Degree(fac[1]) eq 1];
+  // Sort roots by how close they are in Qp to the original value
+  Sort(~alist, func< a, b | Valuation(a_Qp - Qp!loc(b)) - Valuation(a_Qp - Qp!loc(a)) >);
+  return alist[1];
+end function;
 
 
 // Find an equivariant splitting of the Hodge filtration.

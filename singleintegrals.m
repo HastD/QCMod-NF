@@ -180,6 +180,33 @@ intrinsic ColemanData(Q::RngUPolElt[RngUPol], p::RngIntElt, N::RngIntElt :
   return ColemanData(Q, v, N : useU:=useU, basis0:=basis0, basis1:=basis1, basis2:=basis2, heights:=heights);
 end intrinsic;
 
+function eval_poly_Qp(f, z, v)
+  // Evaluate polynomial f in K[x] at p-adic number z (where v|p is a split prime of K)
+  Qp := Parent(z);
+  Kv, loc := Completion(NumberField(Order(v)), v);
+  // note: don't multiply by z^0, it causes issues with p-adic precision
+
+  return Qp!loc(Coefficient(f, 0)) + &+[Qp | Qp!loc(Coefficient(f, i)) * z^i : i in [1 .. Degree(f)]];
+end function;
+
+function eval_ff_mat_Qp(A, z, v)
+  // Evaluate matrix A with entries in K(x) at p-adic number z (where v|p is a split prime of K)
+  Qp := Parent(z);
+  Qpx := PolynomialRing(Qp);
+  Kv, loc := Completion(NumberField(Order(v)), v);
+  m := NumberOfRows(A);
+  n := NumberOfColumns(A);
+  Az := ZeroMatrix(Qp, m, n);
+  for i := 1 to m do
+    for j := 1 to n do
+      num_Qpx := Qpx![loc(c) : c in Coefficients(Numerator(A[i, j]))];
+      denom_Qpx := Qpx![loc(c) : c in Coefficients(Denominator(A[i, j]))];
+      Az[i, j] := Evaluate(num_Qpx, z) / Evaluate(denom_Qpx, z);
+    end for;
+  end for;
+  return Az;
+end function;
+
 function xy_coordinates(P, data)
 
   // returns the affine xy-coordinates of a point record
@@ -189,10 +216,12 @@ function xy_coordinates(P, data)
   end if;
   W0 := data`W0;
   d := Degree(data`Q);
+  v := data`v;
   x0 := P`x;
-  W0invx0 := Evaluate(W0^(-1), x0);
-  K := Universe(P`b);
-  b_vector := Matrix(K, d, 1, P`b);
+  Qp := Parent(x0);
+  Qpx := PolynomialRing(Qp);
+  W0invx0 := eval_ff_mat_Qp(W0^(-1), x0, v);
+  b_vector := Matrix(Universe(P`b), d, 1, P`b);
   ypowers := W0invx0*ChangeRing(b_vector,Parent(W0invx0[1,1]));
   y0 := ypowers[2,1];
   return [x0,y0];
@@ -201,25 +230,29 @@ end function;
 
 
 
-set_point:=function(x0,y0,data)
+function set_point(x0,y0,data)
 
   // Constructs a point from affine coordinates x0,y0. 
 
-  Q:=data`Q; p:=data`p; N:=data`N; W0:=data`W0;
+  Q:=data`Q; v:=data`v; p:=data`p; N:=data`N; W0:=data`W0;
   d:=Degree(Q);
+  K := BaseRing(BaseRing(Q));
 
-  if x0 in RationalField() then
-    K:=pAdicField(p,N);
+  if IsCoercible(K, x0) then
+    F := pAdicField(p, N);
+    Kv, loc := Completion(K, v);
+    x0 := F!loc(x0);
+    y0 := F!loc(y0);
   else
-    K:=Parent(x0);
+    F := Parent(x0);
+    y0 := F!y0;
   end if;
-  x0:=K!x0; y0:=K!y0;
 
   if Valuation(x0) lt 0 then
     error "x0 has negative valuation";
   end if;
   
-  if (not(W0 eq IdentityMatrix(BaseRing(W0),d))) and (Valuation(Evaluate(data`r,x0)) gt 0) then
+  if (not(W0 eq IdentityMatrix(BaseRing(W0),d))) and (Valuation(eval_poly_Qp(data`r, x0, v)) gt 0) then
     error "W0 is not the identity and r(x0) is zero mod p";
   end if;
   
@@ -229,12 +262,12 @@ set_point:=function(x0,y0,data)
   P`x:=x0;
 
   y0powers:=[];
-  y0powers[1]:=K!1;
+  y0powers[1]:=F!1;
   for i:=2 to d do
     y0powers[i]:=(y0)^(i-1);
   end for;
   y0powers:=Vector(y0powers);
-  W0x0:=Transpose(Evaluate(W0,x0));
+  W0x0 := Transpose(eval_ff_mat_Qp(W0, x0, v));
 
   // the values of the b_i^0 at P
   P`b := Eltseq(y0powers*ChangeRing(W0x0, BaseRing(y0powers)));
@@ -243,53 +276,76 @@ set_point:=function(x0,y0,data)
 end function;
 
 
-set_bad_point:=function(x,b,inf,data)
+function set_bad_point(x,b,inf,data)
 
-  Q:=data`Q; p:=data`p; N:=data`N; 
+  Q:=data`Q; p:=data`p; N:=data`N;
   Qp:=pAdicField(p,N); d:=Degree(Q);
+  K := BaseRing(BaseRing(Q));
+  Kv, loc := Completion(K, data`v);
 
   format:=recformat<x,b,inf,xt,bt,index>;
   P:=rec<format|>;
   P`inf:=inf;
-  P`x:=Qp!x;
-  P`b:=[Qp!b[i]:i in [1..d]];
+  if IsCoercible(Qp, x) then
+    P`x := Qp!x;
+  else
+    P`x:=Qp!loc(x);
+  end if;
+  if IsCoercible(Qp, b[1]) then
+    P`b := [Qp!b[i] : i in [1..d]];
+  else
+    P`b:=[Qp!loc(b[i]):i in [1..d]];
+  end if;
 
   return P; 
 
 end function;
 
 
-is_bad:=function(P,data)
+function is_bad(P,data)
 
   // check whether the point P is bad
 
-  x0:=P`x; r:=data`r;
+  x0:=P`x; r:=data`r; v:=data`v; p:=data`p; N:=data`N;
+  K := BaseRing(r);
+  if IsCoercible(K, x0) then
+    Qp := pAdicRing(p);
+    x0 := K!x0;
+  else
+    Qp := Parent(x0);
+  end if;
 
   if P`inf then // infinite point
     return true;
-  end if;
-
-  if Valuation(Evaluate(r,x0)) gt 0 then // finite bad point
+  elif Valuation(eval_poly_Qp(r, x0, v)) gt 0 then // finite bad point
     return true;
+  else
+    return false;
   end if;
-
-  return false;
   
 end function;
 
 
-is_very_bad:=function(P,data)
+function is_very_bad(P,data)
 
   // check whether the point P is very bad
 
-  x0:=P`x; r:=data`r; N:=data`N;
+  x0:=P`x; r:=data`r; v:=data`v; p:=data`p; N:=data`N;
+  K := BaseRing(r);
+  if IsCoercible(K, x0) then
+    Qp := pAdicRing(p);
+    x0 := K!x0;
+  else
+    Qp := Parent(x0);
+  end if;
+  Kv, loc := Completion(K, v);
 
   if P`inf then // infinite point
     if Valuation(x0) ge N then // infinite very bad point
       return true;
     end if;
   else // finite point
-    if Valuation(Evaluate(r,x0)) ge N then // finite very bad point
+    if Valuation(eval_poly_Qp(r, x0, v)) ge N then // finite very bad point
       return true;
     end if;
   end if;
@@ -299,7 +355,7 @@ is_very_bad:=function(P,data)
 end function;
 
 
-lie_in_same_disk:=function(P1,P2,data)
+function lie_in_same_disk(P1,P2,data)
 
   // check whether two points P1,P2 lie in the same residue disk
 
@@ -322,13 +378,14 @@ lie_in_same_disk:=function(P1,P2,data)
 end function;
 
 
-minpoly:=function(f1,f2)
+function minpoly(f1,f2)
 
   // computes the minimum polynomial of f2 over Q(f1), where
   // f1,f2 are elements of a 1 dimensional function field over Q
 
-  Qx<x>:=PolynomialRing(RationalField());
-  Qxy<y>:=PolynomialRing(Qx);
+  K := BaseRing(Parent(f1));
+  Kx<x> := PolynomialRing(K);
+  Kxy<y> := PolynomialRing(Kx);
 
   FF:=Parent(f1);
 
@@ -340,7 +397,7 @@ minpoly:=function(f1,f2)
     S:=[];
     for i:=0 to d do
       for j:=0 to d do
-        S:=Append(S,f1^j*f2^i);
+        Append(~S, f1^j*f2^i);
       end for;
     end for;
 
@@ -386,10 +443,10 @@ minpoly:=function(f1,f2)
   
   end while;
 
-  poly:=Qxy!0;
+  poly:=Kxy!0;
   for i:=0 to d do
     for j:=0 to d do
-      poly:=poly+R[i*(d+1)+j+1]*Qx.1^j*Qxy.1^i;
+      poly +:= R[i*(d+1)+j+1]*Kx.1^j*Kxy.1^i;
     end for;
   end for;
 
@@ -399,7 +456,7 @@ minpoly:=function(f1,f2)
     factor:=fac[i][1];
     test:=FF!0;
     for j:=0 to Degree(factor) do
-      test:=test+Evaluate(Coefficient(factor,j),f1)*f2^j;
+      test +:= Evaluate(Coefficient(factor,j),f1)*f2^j;
     end for;
     if test eq 0 then
       poly:=factor;
@@ -411,30 +468,24 @@ minpoly:=function(f1,f2)
 end function;
 
 
-update_minpolys:=function(data,inf,index);
+function update_minpolys(data,inf,index);
 
   // TODO comment
 
-  Qx<x>:=PolynomialRing(RationalField());
-  Qxy<y>:=PolynomialRing(Qx);
-
   Q:=data`Q; W0:=data`W0; Winf:=data`Winf; 
   d:=Degree(Q);
+  K := BaseRing(BaseRing(Q));
+  Kx<x> := PolynomialRing(K);
+  Kxy<y> := PolynomialRing(Kx);
 
   if not assigned data`minpolys then
-    data`minpolys:=[ZeroMatrix(Qxy,d+2,d+2),ZeroMatrix(Qxy,d+2,d+2)];
+    data`minpolys:=[ZeroMatrix(Kxy,d+2,d+2),ZeroMatrix(Kxy,d+2,d+2)];
   end if;
   minpolys:=data`minpolys;
 
-  Qt:=RationalFunctionField(RationalField()); Qty:=PolynomialRing(Qt);
-
-  f:=Qty!0;
-  for i:=0 to d do
-    for j:=0 to Degree(Coefficient(Q,i)) do
-      f:=f+Coefficient(Coefficient(Q,i),j)*Qty.1^i*Qt.1^j;
-    end for;
-  end for;  
-  FF:=FunctionField(f); // function field of curve
+  Kt := RationalFunctionField(K);
+  Kty := PolynomialRing(Kt);
+  FF:=FunctionField(Kty!Q); // function field of curve
 
   if inf then 
     W:=Winf;
@@ -446,7 +497,7 @@ update_minpolys:=function(data,inf,index);
   for i:=1 to d do
     bi:=FF!0;
     for j:=1 to d do
-      bi:=bi+W[i,j]*FF.1^(j-1);
+      bi +:= W[i,j]*FF.1^(j-1);
     end for;
     bfun[i]:=bi;
   end for;
@@ -455,12 +506,12 @@ update_minpolys:=function(data,inf,index);
     if index eq 0 then
        for i:=1 to d do
          if minpolys[2][1,i+1] eq 0 then
-           minpolys[2][1,i+1]:=minpoly(FF!(1/Qt.1),bfun[i]);
+           minpolys[2][1,i+1]:=minpoly(FF!(1/Kt.1),bfun[i]);
          end if;
        end for;
     else
       if minpolys[2][index+1,1] eq 0 then
-        minpolys[2][index+1,1]:=minpoly(bfun[index],FF!(1/Qt.1));
+        minpolys[2][index+1,1]:=minpoly(bfun[index],FF!(1/Kt.1));
       end if;
       for i:=1 to d do
         if minpolys[2][index+1,i+1] eq 0 then
@@ -472,12 +523,12 @@ update_minpolys:=function(data,inf,index);
     if index eq 0 then
       for i:=1 to d do
         if minpolys[1][1,i+1] eq 0 then
-          minpolys[1][1,i+1]:=minpoly(FF!Qt.1,bfun[i]);
+          minpolys[1][1,i+1]:=minpoly(FF!Kt.1,bfun[i]);
         end if;
       end for;
     else
       if minpolys[1][index+1,1] eq 0 then
-        minpolys[1][index+1,1]:=minpoly(bfun[index],FF!Qt.1);
+        minpolys[1][index+1,1]:=minpoly(bfun[index],FF!Kt.1);
       end if;
       for i:=1 to d do
         if minpolys[1][index+1,i+1] eq 0 then
@@ -494,50 +545,40 @@ update_minpolys:=function(data,inf,index);
 end function;
 
 
-frobenius_pt:=function(P,data);
+function frobenius_pt(P, data);
 
   // Computes the image of P under Frobenius
 
-  x0:=P`x; Q:=data`Q; p:=data`p; N:=data`N; W0:=data`W0; Winf:=data`Winf;
-  d:=Degree(Q); K:=Parent(x0); Ky:=PolynomialRing(K);
+  x0:=P`x; Q:=data`Q; v:=data`v; p:=data`p; N:=data`N; W0:=data`W0; Winf:=data`Winf;
+  d:=Degree(Q); L:=Parent(x0); Ly:=PolynomialRing(L);
 
   x0p:=x0^p;
   b:=P`b;
 
-  Qt:=RationalFunctionField(RationalField()); Qty:=PolynomialRing(Qt);
-
-  f:=Qty!0;
-  for i:=0 to d do
-    for j:=0 to Degree(Coefficient(Q,i)) do
-      f:=f+Coefficient(Coefficient(Q,i),j)*Qty.1^i*Qt.1^j;
-    end for;
-  end for;  
-  FF:=FunctionField(f); // function field of curve
+  K := BaseRing(BaseRing(Q));
+  Kt := RationalFunctionField(K);
+  Kty := PolynomialRing(Kt);
+  FF := FunctionField(Kty!Q); // function field of curve
 
   if not is_bad(P,data) then // finite good point
     
-    W0invx0:=Transpose(Evaluate(W0^(-1),x0));
+    W0invx0 := Transpose(eval_ff_mat_Qp(W0^(-1), x0, v));
 
     ypowers:=Vector(b)*ChangeRing(W0invx0,Parent(b[1]));
     y0:=ypowers[2];
   
-    C:=Coefficients(Q);
-    D:=[];
-    for i:=1 to #C do
-      D[i]:=Evaluate(C[i],x0p);
-    end for;
-    fy:=Ky!D;
+    fy := Ly![eval_poly_Qp(Qi, x0p, v) : Qi in Coefficients(Q)];
 
     y0p:=HenselLift(fy,y0^p); // Hensel lifting
   
     y0ppowers:=[];
-    y0ppowers[1]:=K!1;
+    y0ppowers[1]:=L!1;
     for i:=2 to d do
       y0ppowers[i]:=y0p^(i-1);
     end for;
     y0ppowers:=Vector(y0ppowers);
 
-    W0x0:=Transpose(Evaluate(W0,x0));
+    W0x0 := Transpose(eval_ff_mat_Qp(W0, x0, v));
   
     b := Eltseq(y0ppowers*ChangeRing(W0x0, BaseRing(y0ppowers)));
 
@@ -546,30 +587,24 @@ frobenius_pt:=function(P,data);
     for i:=1 to d do
       bi:=FF!0;
       for j:=1 to d do
-        bi:=bi+Winf[i,j]*FF.1^(j-1);
+        bi +:= Winf[i,j]*FF.1^(j-1);
       end for;
 
       if assigned data`minpolys and data`minpolys[2][1,i+1] ne 0 then
         poly:=data`minpolys[2][1,i+1];
       else
-        poly:=minpoly(FF!(1/Qt.1),bi);
+        poly:=minpoly(FF!(1/Kt.1),bi);
       end if;
 
-      C:=Coefficients(poly);
-      D:=[];
-      for i:=1 to #C do
-        D[i]:=Evaluate(C[i],x0p); 
-      end for;
-      fy:=Ky!D;
-
-      fac:=Factorisation(fy); // Roots has some problems that Factorisation does not
+      fy := Ly![Evaluate(c, x0p) : c in Coefficients(poly)];
+      factors := Factorisation(fy); // Roots has some problems that Factorisation does not
       zeros:=[];
-      for j:=1 to #fac do
-        if Degree(fac[j][1]) eq 1 then
-          zeros:=Append(zeros,-Coefficient(fac[j][1],0)/Coefficient(fac[j][1],1));
+      for fac in factors do
+        if Degree(fac[1]) eq 1 then
+          Append(~zeros, -Coefficient(fac[1],0)/Coefficient(fac[1],1));
         end if;
       end for;
-      
+
       done:=false;
       j:=1;
       while not done and j le #zeros do
@@ -577,7 +612,7 @@ frobenius_pt:=function(P,data);
           done:=true;
           b[i]:=zeros[j];
         end if;
-        j:=j+1;
+        j +:= 1;
       end while;
       if not done then
         error "Frobenius does not converge at P";
@@ -589,27 +624,21 @@ frobenius_pt:=function(P,data);
    for i:=1 to d do
       bi:=FF!0;
       for j:=1 to d do
-        bi:=bi+W0[i,j]*FF.1^(j-1);
+        bi +:= W0[i,j]*FF.1^(j-1);
       end for;
 
       if assigned data`minpolys and data`minpolys[1][1,i+1] ne 0 then
         poly:=data`minpolys[1][1,i+1];
       else
-        poly:=minpoly(FF!Qt.1,bi);
+        poly:=minpoly(FF!Kt.1,bi);
       end if;
 
-      C:=Coefficients(poly);
-      D:=[];
-      for i:=1 to #C do
-        D[i]:=Evaluate(C[i],x0p); 
-      end for;
-      fy:=Ky!D;
-
-      fac:=Factorisation(fy); // Roots has some problems that Factorisation does not
+      fy := Ly![Evaluate(c, x0p) : c in Coefficients(poly)];
+      factors := Factorisation(fy); // Roots has some problems that Factorisation does not
       zeros:=[];
-      for j:=1 to #fac do
-        if Degree(fac[j][1]) eq 1 then
-          zeros:=Append(zeros,-Coefficient(fac[j][1],0)/Coefficient(fac[j][1],1));
+      for fac in factors do
+        if Degree(fac[1]) eq 1 then
+          Append(~zeros, -Coefficient(fac[1],0)/Coefficient(fac[1],1));
         end if;
       end for;
 
@@ -620,7 +649,7 @@ frobenius_pt:=function(P,data);
           done:=true;
           b[i]:=zeros[j];
         end if;
-        j:=j+1;
+        j +:= 1;
       end while;
       if not done then
         error "Frobenius does not converge at P";
@@ -628,23 +657,23 @@ frobenius_pt:=function(P,data);
     end for;
 
   end if;
-  
-    P`x:=x0p;
-    P`b:=b;
-    delete P`xt;
-    delete P`bt;
-    delete P`index;
+
+  P`x:=x0p;
+  P`b:=b;
+  delete P`xt;
+  delete P`bt;
+  delete P`index;
 
   return P;
 end function;
 
 
-teichmueller_pt:=function(P,data : N :=0)
+function teichmueller_pt(P, data : N:=0)
 
   // Compute the Teichmueller point in the residue disk at a good point P
 
-  x0:=P`x; Q:=data`Q; p:=data`p; W0:=data`W0; Winf:=data`Winf;
-  d:=Degree(Q); K:=Parent(x0); Ky:=PolynomialRing(K);
+  x0:=P`x; Q:=data`Q; v:=data`v; p:=data`p; W0:=data`W0; Winf:=data`Winf;
+  d:=Degree(Q); L:=Parent(x0); Ly:=PolynomialRing(L);
 
   if is_bad(P,data) then
     error "Point is bad";
@@ -652,29 +681,23 @@ teichmueller_pt:=function(P,data : N :=0)
 
   if IsZero(N) then N := data`N; end if;
 
-  x0new:=K!TeichmuellerLift(FiniteField(p)!x0,pAdicQuotientRing(p,N)); 
+  x0new:=L!TeichmuellerLift(FiniteField(p)!x0,pAdicQuotientRing(p,N)); 
   b:=P`b; 
-  W0invx0:=Transpose(Evaluate(W0^(-1),x0));
+  W0invx0 := Transpose(eval_ff_mat_Qp(W0^(-1), x0, v));
   ypowers:=Vector(b)*ChangeRing(W0invx0,Parent(b[1]));
   y0:=ypowers[2];
-  
-  C:=Coefficients(Q);
-  D:=[];
-  for i:=1 to #C do
-    D[i]:=Evaluate(C[i],x0new);
-  end for;
-  fy:=Ky!D;
 
+  fy := Ly![eval_poly_Qp(Qi, x0new, v) : Qi in Coefficients(Q)];
   y0new:=HenselLift(fy,y0); // Hensel lifting
   y0newpowers:=[];
-  y0newpowers[1]:=K!1;
+  y0newpowers[1]:=L!1;
   for i:=2 to d do
     y0newpowers[i]:=y0newpowers[i-1]*y0new;
   end for;
   y0newpowers:=Vector(y0newpowers);
 
-  W0x0new:=Transpose(Evaluate(W0,x0new));
-  b:=Eltseq(y0newpowers*ChangeRing(W0x0new,K));
+  W0x0new := Transpose(eval_ff_mat_Qp(W0, x0new, v));
+  b:=Eltseq(y0newpowers*ChangeRing(W0x0new,L));
 
   P`x:=x0new;
   P`b:=b;
@@ -687,7 +710,7 @@ teichmueller_pt:=function(P,data : N :=0)
 end function;
 
 
-local_data:=function(P,data)
+function local_data(P, data)
 
   // For a point P, returns the ramification index of the map x on the residue disk at P
 
@@ -697,77 +720,78 @@ local_data:=function(P,data)
     eP:=1;
     index:=0;
     return eP,index;
-  else     
-    Fp:=FiniteField(p); Fpx:=RationalFunctionField(Fp); Fpxy:=PolynomialRing(Fpx);
-    f:=Fpxy!0;
-    for i:=0 to d do
-      for j:=0 to Degree(Coefficient(Q,i)) do
-        f:=f+(Fp!Coefficient(Coefficient(Q,i),j))*Fpxy.1^i*Fpx.1^j;
-      end for;
-    end for;  
-    FFp:=FunctionField(f); // function field of curve mod p
+  end if;
     
-    if P`inf then
-      places:=InfinitePlaces(FFp); // infinite places of function field of curve mod p
-      W:=Winf;
-    else
-      Px0:=Zeros(Fpx.1-Fp!x0)[1]; 
-      places:=Decomposition(FFp,Px0); // places of function field of curve mod p lying over x0 mod p
-      W:=W0;
-    end if;
-
-    bmodp:=[]; // elements of b mod p, where b is either b^0 or b^inf
-    for i:=1 to d do
-      f:=FFp!0;
-      for j:=1 to d do
-        f:=f+(Fpx!W[i,j])*FFp.1^(j-1);
-      end for;
-      bmodp[i]:=f;
+  Fp:=FiniteField(p); Fpx:=RationalFunctionField(Fp); Fpxy:=PolynomialRing(Fpx);
+  f:=Fpxy!0;
+  for i:=0 to d do
+    cQi := Coefficient(Q, i);
+    for j:=0 to Degree(cQi) do
+      f +:= (Fp!Coefficient(cQi, j))*Fpxy.1^i*Fpx.1^j;
     end for;
+  end for;  
+  FFp:=FunctionField(f); // function field of curve mod p
 
+  if P`inf then
+    places:=InfinitePlaces(FFp); // infinite places of function field of curve mod p
+    W:=Winf;
+  else
+    Px0:=Zeros(Fpx.1-Fp!x0)[1]; 
+    places:=Decomposition(FFp,Px0); // places of function field of curve mod p lying over x0 mod p
+    W:=W0;
+  end if;
+
+  bmodp:=[]; // elements of b mod p, where b is either b^0 or b^inf
+  for i:=1 to d do
+    f:=FFp!0;
+    for j:=1 to d do
+      f +:= (Fpx!W[i,j])*FFp.1^(j-1);
+    end for;
+    bmodp[i]:=f;
+  end for;
+
+  done:=false;
+
+  for i:=1 to #places do
+    same:=true;
+    for j:=1 to d do
+      if Evaluate(bmodp[j],places[i]) ne Fp!b[j] then
+        same:=false;
+      end if;
+    end for;    
+    if same then
+      place:=places[i];
+      done:=true;
+    end if;
+  end for;
+
+  if not done then
+    error "Point does not lie on curve";
+  end if;
+
+  eP:=RamificationIndex(place);
+
+  if eP eq 1 then
+    index:=0;
+  else
     done:=false;
-
-    for i:=1 to #places do
-      same:=true;
-      for j:=1 to d do
-        if Evaluate(bmodp[j],places[i]) ne Fp!b[j] then
-          same:=false;
-        end if;
-      end for;    
-      if same then
-        place:=places[i];
+    i:=1;
+    while not done do
+      ord:=Valuation(bmodp[i]-Evaluate(bmodp[i],place),place);
+      if ord eq 1 then
+        index:=i;
         done:=true;
       end if;
-    end for;
-
-    if not done then
-      error "Point does not lie on curve";
-    end if;
-
-    eP:=RamificationIndex(place);
-
-    if eP eq 1 then
-      index:=0;
-    else
-      done:=false;
-      i:=1;
-      while not done do
-        ord:=Valuation(bmodp[i]-Evaluate(bmodp[i],place),place);
-        if ord eq 1 then
-          index:=i;
-          done:=true;
-        end if;
-        i:=i+1;
-      end while;
-    end if;
-
-    return eP,index,place,bmodp;
+      i:=i+1;
+    end while;
   end if;
+
+  return eP,index,place,bmodp;
 
 end function;
 
 
-hensel_lift:=function(fy,root);
+function hensel_lift(fy, root)
 
   // Finds a root of the polynomial fy over Qp[[t]]
   // by Hensel lifting from an approximate root.
@@ -804,15 +828,15 @@ hensel_lift:=function(fy,root);
   k:=tprec;
   
   while k gt v1 do
-    prec_seq:=Append(prec_seq,k);
+    Append(~prec_seq,k);
     k:=Ceiling(k/2+v2);
   end while;
-  prec_seq:=Reverse(prec_seq);
+  Reverse(~prec_seq);
 
   for j:=1 to #prec_seq do
     root:=Qt!root;
     root:=ChangePrecision(root,prec_seq[j]);
-    root:=root-(Qt!Zpt!Evaluate(fy,root))/(Qt!Zpt!Evaluate(derfy,root));
+    root -:= (Qt!Zpt!Evaluate(fy,root))/(Qt!Zpt!Evaluate(derfy,root));
     root:=Zpt!root;
   end for;
 

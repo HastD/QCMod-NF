@@ -2,8 +2,8 @@ freeze;
 
 import "auxpolys.m": genus;
 import "reductions.m": reduce_mod_pN_Q;
-import "singleintegrals.m": coleman_integrals_on_basis, find_bad_point_in_disk, is_bad, is_very_bad, local_coord,
-  local_data, set_bad_point, tadicprec, teichmueller_pt, tiny_integrals_on_basis_to_z, update_minpolys;
+import "singleintegrals.m": eval_poly_Qp, eval_ff_mat_Qp, coleman_integrals_on_basis, find_bad_point_in_disk, is_bad, is_very_bad,
+  local_coord, local_data, set_bad_point, tadicprec, teichmueller_pt, tiny_integrals_on_basis_to_z, update_minpolys;
 import "misc.m": compare_vals, count_roots_in_unit_ball;
 
 function are_equal_records(P, Q)
@@ -20,20 +20,30 @@ function pos_prec(f)
   return &and[Precision(c) gt 0 : c in Coefficients(f)];
 end function;
 
+function rat_func_apply(f, m, R)
+  // Reduce coefficients of rational function f using the map m, yielding an element of R
+  num := R![m(c) : c in Coefficients(Numerator(f))];
+  denom := R![m(c) : c in Coefficients(Denominator(f))];
+  return num/denom;
+end function;
 
-Fp_points:=function(data);
+function Fp_points(data);
 
-  // Finds all points on the reduction mod p of the curve given by data
+  // Finds all points on the reduction mod v of the curve given by data
 
-  Q:=data`Q; p:=data`p; d:=Degree(Q);  W0:=data`W0; Winf:=data`Winf; 
+  Q:=data`Q; v:=data`v; d:=Degree(Q);  W0:=data`W0; Winf:=data`Winf;
+  K := BaseRing(BaseRing(Q));
 
-  Fp:=FiniteField(p); Fpx:=RationalFunctionField(Fp); Fpxy:=PolynomialRing(Fpx);
+  Fp, res := ResidueClassField(v);
+  Fpx := RationalFunctionField(Fp);
+  Fpxy := PolynomialRing(Fpx);
   f:=Fpxy!0;
   for i:=0 to d do
-    for j:=0 to Degree(Coefficient(Q,i)) do
-      f:=f+(Fp!Coefficient(Coefficient(Q,i),j))*Fpxy.1^i*Fpx.1^j;
+    cQi := Coefficient(Q, i);
+    for j:=0 to Degree(cQi) do
+      f +:= res(Coefficient(cQi, j))*Fpxy.1^i*Fpx.1^j;
     end for;
-  end for;  
+  end for;
   FFp:=FunctionField(f); // function field of curve mod p
 
   places:=Places(FFp,1);
@@ -42,7 +52,7 @@ Fp_points:=function(data);
   for i:=1 to d do
     f:=FFp!0;
     for j:=1 to d do
-      f:=f+(Fpx!W0[i,j])*FFp.1^(j-1);
+      f +:= rat_func_apply(W0[i,j], res, Fpx)*FFp.1^(j-1);
     end for;
     b0modp[i]:=f;
   end for;
@@ -51,7 +61,7 @@ Fp_points:=function(data);
   for i:=1 to d do
     f:=FFp!0;
     for j:=1 to d do
-      f:=f+(Fpx!Winf[i,j])*FFp.1^(j-1);
+      f +:= rat_func_apply(Winf[i,j], res, Fpx)*FFp.1^(j-1);
     end for;
     binfmodp[i]:=f;
   end for;
@@ -69,10 +79,10 @@ Fp_points:=function(data);
             done:=true;
             index:=j;
           end if;
-          j:=j+1;
+          j +:= 1;
         end while;
       end if;
-      Fppts:=Append(Fppts,[*Evaluate(FFp!Fpx.1,places[i]),[Fp!Evaluate(b0modp[j],places[i]): j in [1..d]],false,index*]);    
+      Append(~Fppts,[*Evaluate(FFp!Fpx.1,places[i]),[Fp!Evaluate(b0modp[j],places[i]): j in [1..d]],false,index*]);    
     else
       if Valuation(FFp!(1/Fpx.1)-Evaluate(FFp!(1/Fpx.1),places[i]),places[i]) eq 1 then
         index:=0;
@@ -84,10 +94,10 @@ Fp_points:=function(data);
             done:=true;
             index:=j;
           end if;
-          j:=j+1;
+          j +:= 1;
         end while;
       end if;
-      Fppts:=Append(Fppts,[*Evaluate(FFp!(1/Fpx.1),places[i]),[Fp!Evaluate(binfmodp[j],places[i]): j in [1..d]],true,index*]);
+      Append(~Fppts,[*Evaluate(FFp!(1/Fpx.1),places[i]),[Fp!Evaluate(binfmodp[j],places[i]): j in [1..d]],true,index*]);
     end if;
   end for;
 
@@ -96,36 +106,34 @@ Fp_points:=function(data);
 end function;
 
 
-Qp_points:=function(data:points:=[], Nfactor:=1.5);
+function Qp_points(data : points:=[], Nfactor:=1.5)
 
   // For every point on the reduction mod p of the curve given by data,
   // a Qp point on the curve is returned that reduces to it. Optionally,
   // an (incomplete) list of points can be specified by the user which will
   // then be completed.
-  
-  Q:=data`Q; p:=data`p; N:=data`N; r:=data`r; W0:=data`W0; Winf:=data`Winf; 
-  d:=Degree(Q); Fp:=FiniteField(p); 
-  Qx:=RationalFunctionField(RationalField()); Qxy:=PolynomialRing(Qx);
+
+  Q:=data`Q; v:=data`v; p:=data`p; N:=data`N; r:=data`r; W0:=data`W0; Winf:=data`Winf; 
+  d:=Degree(Q);
+  K := BaseRing(BaseRing(Q));
+  Kv, loc := Completion(K, v);
+  Fp, res := ResidueClassField(v);
+  Kx := RationalFunctionField(K);
+  Kxy :=PolynomialRing(Kx);
 
   Nwork:=Ceiling(N*Nfactor); // Look at this again, how much precision loss in Roots()?
   Qp:=pAdicField(p,Nwork); Qpy:=PolynomialRing(Qp); Zp:=pAdicRing(p,Nwork); Zpy:=PolynomialRing(Zp);
-  
+
   Fppts:=Fp_points(data);
   Qppts:=[];
 
-  f:=Qxy!0;
-  for i:=0 to d do
-    for j:=0 to Degree(Coefficient(Q,i)) do
-      f:=f+Coefficient(Coefficient(Q,i),j)*Qxy.1^i*Qx.1^j;
-    end for;
-  end for;  
-  FF:=FunctionField(f); // function field of curve
+  FF:=FunctionField(Kxy!Q); // function field of curve
 
   b0fun:=[];
   for i:=1 to d do
     bi:=FF!0;
     for j:=1 to d do
-      bi:=bi+W0[i,j]*FF.1^(j-1);
+      bi +:= W0[i,j]*FF.1^(j-1);
     end for;
     b0fun[i]:=bi;
   end for;
@@ -134,26 +142,23 @@ Qp_points:=function(data:points:=[], Nfactor:=1.5);
   for i:=1 to d do
     bi:=FF!0;
     for j:=1 to d do
-      bi:=bi+Winf[i,j]*FF.1^(j-1);
+      bi +:= Winf[i,j]*FF.1^(j-1);
     end for;
     binffun[i]:=bi;
   end for;
 
-  for i:=1 to #Fppts do
-
-    Fppoint:=Fppts[i];
-    j:=1;
-    done:=false;
-    while not done and j le #points do
-      if (Fppoint[3] eq points[j]`inf) and (Fp!(points[j]`x)-Fppoint[1] eq 0) and ([Fp!(points[j]`b)[k]:k in [1..d]] eq Fppoint[2]) then
-        done:=true;
-        P:=points[j];
+  for Fppoint in Fppts do
+    done := false;
+    for pt in points do
+      if (Fppoint[3] eq pt`inf) and (Fp!(pt`x)-Fppoint[1] eq 0) and ([Fp!(pt`b)[k]:k in [1..d]] eq Fppoint[2]) then
+        done := true;
+        P := pt;
+        break;
       end if;
-      j:=j+1; 
-    end while;
-    
+    end for;
+
     if not done then
-      
+
       if Fppoint[3] then // infinite point
         
         inf:=true;
@@ -169,29 +174,16 @@ Qp_points:=function(data:points:=[], Nfactor:=1.5);
             end if;
             poly:=data`minpolys[2][1,j+1];
 
-            C:=Coefficients(poly);
-            D:=[];
-            for k:=1 to #C do
-              D[k]:=Evaluate(C[k],x); 
-            end for;
-            fy:=Qpy!Zpy!D;
-            fac:=Factorisation(fy); // Roots has some problems that Factorisation does not
-            zeros:=[];
-            for j:=1 to #fac do
-              if Degree(fac[j][1]) eq 1 then
-                zeros:=Append(zeros,-Coefficient(fac[j][1],0)/Coefficient(fac[j][1],1));
-              end if;
-            end for;
+            fy := Qpy!Zpy![eval_poly_Qp(f, x, v) : f in Coefficients(poly)];
+            factors := Factorisation(fy); // Roots has some problems that Factorisation does not
+            zeros := [-Coefficient(fac[1],0)/Coefficient(fac[1],1) : fac in factors | Degree(fac[1]) eq 1];
 
-            done:=false;
-            k:=1;
-            while not done and k le #zeros do
-              if (Fp!zeros[k]-Fppoint[2][j] eq 0) then 
-                done:=true;
-                b[j]:=zeros[k];
+            for root in zeros do
+              if (Fp!root - Fppoint[2][j]) eq 0 then
+                b[j] := root;
+                break;
               end if;
-              k:=k+1;
-            end while;
+            end for;
           end for;
         else // x-point[1] not local coordinate
           index:=Fppoint[4];
@@ -202,29 +194,16 @@ Qp_points:=function(data:points:=[], Nfactor:=1.5);
           end if;
           poly:=data`minpolys[2][index+1,1];
 
-          C:=Coefficients(poly);
-          D:=[];
-          for k:=1 to #C do
-            D[k]:=Evaluate(C[k],bindex); 
-          end for;
-          fy:=Qpy!Zpy!D;
-          fac:=Factorisation(fy); // Roots has some problems that Factorisation does not
-          zeros:=[];
-          for j:=1 to #fac do
-            if Degree(fac[j][1]) eq 1 then
-              zeros:=Append(zeros,-Coefficient(fac[j][1],0)/Coefficient(fac[j][1],1));
-            end if;
-          end for;
+          fy := Qpy!Zpy![eval_poly_Qp(f, bindex, v) : f in Coefficients(poly)];
+          factors := Factorisation(fy); // Roots has some problems that Factorisation does not
+          zeros := [-Coefficient(fac[1],0)/Coefficient(fac[1],1) : fac in factors | Degree(fac[1]) eq 1];
 
-          done:=false;
-          k:=1;
-          while not done and k le #zeros do
-            if (Fp!zeros[k]-Fppoint[1] eq 0) then 
-              done:=true;
-              x:=zeros[k];
+          for root in zeros do
+            if (Fp!root - Fppoint[1]) eq 0 then 
+              x := root;
+              break;
             end if;
-            k:=k+1;
-          end while;
+          end for;
           b:=[];
           for j:=1 to d do
             if j eq index then
@@ -236,29 +215,16 @@ Qp_points:=function(data:points:=[], Nfactor:=1.5);
               end if;
               poly:=data`minpolys[2][index+1,j+1];
 
-              C:=Coefficients(poly);
-              D:=[];
-              for k:=1 to #C do
-                D[k]:=Evaluate(C[k],bindex); 
-              end for;
-              fy:=Qpy!Zpy!D;
-              fac:=Factorisation(fy); // Roots has some problems that Factorisation does not
-              zeros:=[];
-              for j:=1 to #fac do
-                if Degree(fac[j][1]) eq 1 then
-                  zeros:=Append(zeros,-Coefficient(fac[j][1],0)/Coefficient(fac[j][1],1));
-                end if;
-              end for;
+              fy:=Qpy!Zpy![eval_poly_Qp(f, bindex, v) : f in Coefficients(poly)];
+              factors := Factorisation(fy); // Roots has some problems that Factorisation does not
+              zeros := [-Coefficient(fac[1],0)/Coefficient(fac[1],1) : fac in factors | Degree(fac[1]) eq 1];
 
-              done:=false;
-              k:=1;
-              while not done and k le #zeros do
-                if (Fp!zeros[k]-Fppoint[2][j] eq 0) then 
-                  done:=true;
-                  b[j]:=zeros[k];
+              for root in zeros do
+                if (Fp!root - Fppoint[2][j]) eq 0 then
+                  b[j] := root;
+                  break;
                 end if;
-                k:=k+1;
-              end while;
+              end for;
             end if;
           end for; 
         end if;
@@ -269,27 +235,17 @@ Qp_points:=function(data:points:=[], Nfactor:=1.5);
 
           x:=Qp!Fppoint[1];
 
-          if Valuation(Evaluate(r,x)) eq 0 then // good point
-            W0invx:=Transpose(Evaluate(W0^(-1),x));
+          if Valuation(eval_poly_Qp(r, x, v)) eq 0 then // good point
+            W0invx := eval_ff_mat_Qp(W0^(-1), x, v);
             ypowersmodp:=Vector(Fppoint[2])*ChangeRing(W0invx,FiniteField(p));
             y:=Qp!ypowersmodp[2];
 
-            C:=Coefficients(Q);
-            D:=[];
-            for i:=1 to #C do
-              D[i]:=Evaluate(C[i],x);
-            end for;
-            fy:=Qpy!Zpy!D;
+            fy:=Qpy![eval_poly_Qp(f, x, v) : f in Coefficients(Q)];
 
             y:=HenselLift(fy,y); // Hensel lifting
-            ypowers:=[];
-            ypowers[1]:=Qp!1;
-            for i:=2 to d do
-              ypowers[i]:=ypowers[i-1]*y;
-            end for;
-            ypowers:=Vector(ypowers);
+            ypowers := Vector([Qp!1 * y^(i-1) : i in [1 .. d]]);
 
-            W0x:=Transpose(Evaluate(W0,x));
+            W0x := eval_ff_mat_Qp(W0, x, v);
             b:=Eltseq(ypowers*ChangeRing(W0x,Parent(ypowers[1])));
           else // bad point
             for j:=1 to d do
@@ -300,29 +256,15 @@ Qp_points:=function(data:points:=[], Nfactor:=1.5);
               end if;
               poly:=data`minpolys[1][1,j+1];
 
-              C:=Coefficients(poly);
-              D:=[];
-              for k:=1 to #C do
-                D[k]:=Evaluate(C[k],x); 
-              end for;
-              fy:=Qpy!Zpy!D;
-              fac:=Factorisation(fy); // Roots has some problems that Factorisation does not
-              zeros:=[];
-              for j:=1 to #fac do
-                if Degree(fac[j][1]) eq 1 then
-                  zeros:=Append(zeros,-Coefficient(fac[j][1],0)/Coefficient(fac[j][1],1));
-                end if;
-              end for;
+              fy:=Qpy!Zpy![eval_poly_Qp(f, x, v) : f in Coefficients(poly)];
+              factors := Factorisation(fy); // Roots has some problems that Factorisation does not
+              zeros := [-Coefficient(fac[1],0)/Coefficient(fac[1],1) : fac in factors | Degree(fac[1]) eq 1];
 
-              done:=false;
-              k:=1;
-              while not done and k le #zeros do
-                if (Fp!zeros[k]-Fppoint[2][j] eq 0) then 
-                  done:=true;
-                  b[j]:=zeros[k];
+              for root in zeros do
+                if (Fp!root - Fppoint[2][j]) eq 0 then 
+                  b[j] := root;
                 end if;
-                k:=k+1;
-              end while;
+              end for;
             end for;
           end if;
 
@@ -335,29 +277,16 @@ Qp_points:=function(data:points:=[], Nfactor:=1.5);
           end if;
           poly:=data`minpolys[1][index+1,1];
 
-          C:=Coefficients(poly);
-          D:=[];
-          for k:=1 to #C do
-            D[k]:=Evaluate(C[k],bindex); 
-          end for;
-          fy:=Qpy!Zpy!D;
-          fac:=Factorisation(fy); // Roots has some problems that Factorisation does not
-          zeros:=[];
-          for j:=1 to #fac do
-            if Degree(fac[j][1]) eq 1 then
-              zeros:=Append(zeros,-Coefficient(fac[j][1],0)/Coefficient(fac[j][1],1));
+          fy := Qpy!Zpy![eval_poly_Qp(f, bindex, v) : f in Coefficients(poly)];
+          factors := Factorisation(fy); // Roots has some problems that Factorisation does not
+          zeros := [-Coefficient(fac[1],0)/Coefficient(fac[1],1) : fac in factors | Degree(fac[1]) eq 1];
+
+          for root in zeros do
+            if (Fp!root - Fppoint[1]) eq 0 then 
+              x := root;
             end if;
           end for;
 
-          done:=false;
-          k:=1;
-          while not done and k le #zeros do
-            if (Fp!zeros[k]-Fppoint[1] eq 0) then 
-              done:=true;
-              x:=zeros[k];
-            end if;
-            k:=k+1;
-          end while;
           b:=[];
           for j:=1 to d do
             if j eq index then
@@ -369,33 +298,19 @@ Qp_points:=function(data:points:=[], Nfactor:=1.5);
               end if;
               poly:=data`minpolys[1][index+1,j+1];
 
-              C:=Coefficients(poly);
-              D:=[];
-              for k:=1 to #C do
-                D[k]:=Evaluate(C[k],bindex); 
-              end for;
-              fy:=Qpy!Zpy!D;
-              fac:=Factorisation(fy); // Roots has some problems that Factorisation does not
-              zeros:=[];
-              for j:=1 to #fac do
-                if Degree(fac[j][1]) eq 1 then
-                  zeros:=Append(zeros,-Coefficient(fac[j][1],0)/Coefficient(fac[j][1],1));
-                end if;
-              end for;
+              fy := Qpy!Zpy![eval_poly_Qp(f, bindex, v) : f in Coefficients(poly)];
+              factors := Factorisation(fy); // Roots has some problems that Factorisation does not
+              zeros := [-Coefficient(fac[1],0)/Coefficient(fac[1],1) : fac in factors | Degree(fac[1]) eq 1];
 
-              done:=false;
-              k:=1;
-              while not done and k le #zeros do
-                if (Fp!zeros[k]-Fppoint[2][j] eq 0) then 
-                  done:=true;
-                  b[j]:=zeros[k];
+              for root in zeros do
+                if (Fp!root - Fppoint[2][j]) eq 0 then 
+                  b[j] := root;
                 end if;
-                k:=k+1;
-              end while;
+              end for;
             end if;
           end for;
         end if;
-        
+
       end if;
 
       P:=set_bad_point(x,b,inf,data);
@@ -405,9 +320,9 @@ Qp_points:=function(data:points:=[], Nfactor:=1.5);
     if is_bad(P,data) and not is_very_bad(P,data) then
       P:=find_bad_point_in_disk(P,data);
     end if;
-    
-    Qppts:=Append(Qppts,P);
-  
+
+    Append(~Qppts,P);
+
   end for;
 
   return Qppts,data;
@@ -415,54 +330,51 @@ Qp_points:=function(data:points:=[], Nfactor:=1.5);
 end function;
 
 
-Q_points:=function(data,bound);
+function Q_points(data, bound : known_points := []);
 
   // Returns a list (not guaranteed to be complete) of Q-rational points 
   // upto height bound on the curve given by data.
 
-  Q:=data`Q; p:=data`p; N:=data`N; r:=data`r; W0:=data`W0; Winf:=data`Winf;
+  Q:=data`Q; v:=data`v; N:=data`N; r:=data`r; W0:=data`W0; Winf:=data`Winf;
   d:=Degree(Q);
+  K := BaseRing(BaseRing(Q));
 
   pointlist:=[];
 
-  A2:=AffineSpace(RationalField(),2);
-  Qxy:=PolynomialRing(RationalField(),2);
-  
-  QA2:=Qxy!0;
+  A2 := AffineSpace(K, 2);
+  Kxy := CoordinateRing(A2);
+
+  QA2:=Kxy!0;
   C:=Coefficients(Q);
   for i:=1 to #C do
     D:=Coefficients(C[i]);
     for j:=1 to #D do
-      QA2:=QA2+D[j]*(Qxy.1)^(j-1)*(Qxy.2)^(i-1);
+      QA2 +:= D[j]*(Kxy.1)^(j-1)*(Kxy.2)^(i-1);
     end for;
   end for;
   
   X:=Scheme(A2,QA2);
-  pts:=PointSearch(X,bound);
+  pts := [X!pt : pt in known_points];
+  if K eq RationalField() then
+    pts cat:= PointSearch(X, bound);
+  end if;
+  pts := Setseq(Seqset(pts)); // remove duplicate points
   xvalues:=[];
-  for i:=1 to #pts do
-    if not pts[i][1] in xvalues then
-      xvalues:=Append(xvalues,pts[i][1]);
+  for pt in pts do
+    if not pt[1] in xvalues then
+      Append(~xvalues, pt[1]);
     end if;
   end for;
 
-  Qx:=RationalFunctionField(RationalField());
-  Qxy:=PolynomialRing(Qx);
-  Qfun:=Qxy!0;
-  C:=Coefficients(Q);
-  for i:=1 to #C do
-    D:=Coefficients(C[i]);
-    for j:=1 to #D do
-      Qfun:=Qfun+D[j]*(Qx.1)^(j-1)*(Qxy.1)^(i-1);
-    end for;
-  end for;
-  FF:=FunctionField(Qfun);
+  Kx:=RationalFunctionField(K);
+  Kxy:=PolynomialRing(Kx);
+  FF := FunctionField(Kxy!Q);
 
   b0fun:=[];
   for i:=1 to d do
     bi:=FF!0;
     for j:=1 to d do
-      bi:=bi+W0[i,j]*FF.1^(j-1);
+      bi +:= W0[i,j]*FF.1^(j-1);
     end for;
     b0fun[i]:=bi;
   end for;
@@ -471,50 +383,39 @@ Q_points:=function(data,bound);
   for i:=1 to d do
     bi:=FF!0;
     for j:=1 to d do
-      bi:=bi+Winf[i,j]*FF.1^(j-1);
+      bi +:= Winf[i,j]*FF.1^(j-1);
     end for;
     binffun[i]:=bi;
   end for;
 
-  for i:=1 to #xvalues do
-    places:=Decomposition(FF,Zeros(Qx.1-xvalues[i])[1]);
-    if Valuation(xvalues[i],p) ge 0 then
-      for j:=1 to #places do
-        if Degree(places[j]) eq 1 then
-          x:=xvalues[i];
-          b:=[];
-          for k:=1 to d do
-            b[k]:=Evaluate(b0fun[k],places[j]);
-          end for;
-          P:=set_bad_point(x,b,false,data);
-          pointlist:=Append(pointlist,P);
+  for xval in xvalues do
+    places := Decomposition(FF,Zeros(Kx.1-xval)[1]);
+    if Valuation(xval,v) ge 0 then
+      for place in places do
+        if Degree(place) eq 1 then
+          b := [Evaluate(c, place) : c in b0fun];
+          P := set_bad_point(xval,b,false,data);
+          Append(~pointlist,P);
         end if;
       end for;
     else
-      for j:=1 to #places do
-        if Degree(places[j]) eq 1 then
-          x:=1/xvalues[i];
-          b:=[];
-          for k:=1 to d do
-            b[k]:=Evaluate(binffun[k],places[j]);
-          end for;
-          P:=set_bad_point(x,b,true,data);
-          pointlist:=Append(pointlist,P);
+      for place in places do
+        if Degree(place) eq 1 then
+          b := [Evaluate(c, place) : c in binffun];
+          P := set_bad_point(1/xval,b,true,data);
+          Append(~pointlist,P);
         end if;
       end for;
     end if;
   end for; 
 
   places:=InfinitePlaces(FF);
-  for i:=1 to #places do
-    if Degree(places[i]) eq 1 then
-      x:=0;
-      b:=[];
-      for j:=1 to d do
-        b[j]:=Evaluate(binffun[j],places[i]);
-      end for;
-      P:=set_bad_point(x,b,true,data);
-      pointlist:=Append(pointlist,P);
+  for place in places do
+    if Degree(place) eq 1 then
+      x := 0;
+      b := [Evaluate(c, place) : c in binffun];
+      P := set_bad_point(x,b,true,data);
+      Append(~pointlist,P);
     end if;
   end for; 
 
