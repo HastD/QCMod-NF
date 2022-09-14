@@ -4,7 +4,7 @@ freeze;
 // Function for computing Hecke correspondence  //
 //////////////////////////////////////////////////
 
-import "misc.m": lindepQp;
+import "misc.m": algdepQp,lindepQp;
 
 intrinsic HeckeCorrespondenceQC(data::Rec, q::RngIntElt, N::RngIntElt :
                                 basis0:=[], basis1:=[], use_polys:=[])
@@ -20,8 +20,8 @@ intrinsic HeckeCorrespondenceQC(data::Rec, q::RngIntElt, N::RngIntElt :
   if a list of rational polynomials [f1,...,fd] is given in use_polys, then the Zi returned will be 2*g*fi(Tq)-Trace(fi(Tq)).}
 
   Q:=data`Q; g:=data`g; d:=Degree(Q); p:=data`p; 
-
-  C:=ZeroMatrix(RationalField(),2*g,2*g);
+  K:=BaseRing(BaseRing(Q));
+  C:=ZeroMatrix(K,2*g,2*g);
   for i:=1 to g do
     C[i,g+i]:=1;
     C[g+i,i]:=-1; 
@@ -64,13 +64,13 @@ intrinsic HeckeCorrespondenceQC(data::Rec, q::RngIntElt, N::RngIntElt :
   prec_loss_bd +:= q eq p select 1 else 0;
 
   Zs:=[]; As:=[];
-  AQ := ZeroMatrix(Rationals(), 2*g, 2*g); ZQ := AQ;
+  AK := ZeroMatrix(K, 2*g, 2*g); ZK := AK;
 
   if #use_polys eq 0 then
 
     for i in [1..g-1] do
       A := Aq^i; // ith power of hecke operator
-      Zmx := (2*g*A-Trace(A)*IdentityMatrix(Rationals(),2*g))*C^(-1);  
+      Zmx := (2*g*A-Trace(A)*IdentityMatrix(K,2*g))*C^(-1);  
       // Zmx is a q-adic approximation of a nice correspondence Z
       // Now clear denominators to find A and Z exactly
       D1 := LCM([LCM([Denominator(Zmx[j,k]):k in [1..2*g]]):j in [1..2*g]]);
@@ -89,25 +89,25 @@ intrinsic HeckeCorrespondenceQC(data::Rec, q::RngIntElt, N::RngIntElt :
           error "q-adic approximation of nice correspondence not exact.";  
         end if;
           
-        W:=ZeroMatrix(Rationals(),2*g, 2*g);
-        W[1,g+1]:=Trace(ZQ*C);
-        W[g+1,1]:=-Trace(ZQ*C);
-        ZQ:=2*ZQ+W;
+        W:=ZeroMatrix(K,2*g, 2*g);
+        W[1,g+1]:=Trace(ZK*C);
+        W[g+1,1]:=-Trace(ZK*C);
+        ZK:=2*ZK+W;
       end if;
-      Append(~Zs,ZQ);
-      Append(~As,AQ);
+      Append(~Zs,ZK);
+      Append(~As,AK);
     end for;
   else
     for i in [1..g-1] do
-      AQ := ChangeRing(ChangeRing(Aq,pAdicRing(p,N))^i,Rationals()); // ith power of hecke operator
-      Append(~As,AQ);
+      AK := ChangeRing(ChangeRing(Aq,pAdicRing(p,N))^i,K); // ith power of hecke operator
+      Append(~As,AK);
     end for;
 
-    A0:=ChangeRing(Evaluate(use_polys[1],ChangeRing(As[1],pAdicRing(p,N))),Rationals());
+    A0:=ChangeRing(Evaluate(use_polys[1],ChangeRing(As[1],pAdicRing(p,N))),K);
     for i in [2..#use_polys] do
-      A :=ChangeRing(Evaluate(use_polys[i],ChangeRing(As[1],pAdicRing(p,N))),Rationals()); 
-      ZQ := (Trace(A0)*A-Trace(A)*A0)*C^(-1);  
-      Append(~Zs,ZQ);
+      A :=ChangeRing(Evaluate(use_polys[i],ChangeRing(As[1],pAdicRing(p,N))),K); 
+      ZK := (Trace(A0)*A-Trace(A)*A0)*C^(-1);  
+      Append(~Zs,ZK);
     end for;
 
     A:=Aq;
