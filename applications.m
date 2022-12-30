@@ -424,7 +424,7 @@ function Q_points(data, bound : known_points := []);
 end function;
 
 
-my_roots_Zpt:=function(f)
+function my_roots_Zpt(f)
 
   // Custom function to compute the roots of a polynomial
   // f over Z_p since the Magma intrinsic requires the leading
@@ -465,7 +465,7 @@ my_roots_Zpt:=function(f)
   if lcindex gt 0 then
     coefs:=Coefficients(f);
     for j:=1 to lcindex do
-      coefs:=Remove(coefs,1);
+      Remove(~coefs,1);
     end for;
     f:=Zps!coefs;
     zero:=true;
@@ -479,10 +479,7 @@ my_roots_Zpt:=function(f)
     error "f*p^(-v(f)) reduces to zero. Precision loss too large?";
   end if; 
   modproots:=Roots(fmodp);
-  Fproots:=[];
-  for i:=1 to #modproots do
-    Fproots[i]:=modproots[i][1];
-  end for;
+  Fproots := [root[1] : root in modproots];
   Zproots:=[[*Zp!e,1*]:e in Fproots];
   i:=1;
   while i le #Zproots do
@@ -491,7 +488,7 @@ my_roots_Zpt:=function(f)
     v1:=Valuation(Evaluate(f,z));
     v2:=Valuation(Evaluate(Derivative(f),z)); 
     if not (v1 gt 2*v2 and Nz ge v2+1) and (v1 lt Nf-val) then
-      Zproots:=Remove(Zproots,i);
+      Remove(~Zproots,i);
       znew:=z+p^Nz*Zps.1;
       gNz := Evaluate(f,znew);
       if not pos_prec(gNz) then
@@ -504,10 +501,10 @@ my_roots_Zpt:=function(f)
         Fproots:=[[e,1]: e in Fp];
       end if;
       for j:=1 to #Fproots do
-        Zproots:=Insert(Zproots,i,[*z+p^Nz*(Zp!Fproots[j][1]),Nz+1*]);
+        Insert(~Zproots,i,[*z+p^Nz*(Zp!Fproots[j][1]),Nz+1*]);
       end for;
     else
-      i:=i+1;
+      i +:= 1;
     end if;
   end while;
 
@@ -526,7 +523,7 @@ my_roots_Zpt:=function(f)
   end for;
 
   if zero then
-    Zproots:=Append(Zproots,[*Zp!0,Nf-val*]);
+    Append(~Zproots,[*Zp!0,Nf-val*]);
   end if;
 
   return Zproots;
@@ -554,7 +551,7 @@ function roots_Zpt(f)
 end function;
 
 
-basis_kernel:=function(A)
+function basis_kernel(A)
 
   // Compute a basis for the kernel of the matrix A over Qp
 
@@ -569,12 +566,7 @@ basis_kernel:=function(A)
   Zp:=pAdicRing(p,N);
   row:=NumberOfRows(A);
   col:=NumberOfColumns(A);
-  matpN:=ZeroMatrix(Zp,row,col);
-  for i:=1 to row do
-    for j:=1 to col do
-      matpN[i,j]:=Zp!A[i,j];
-    end for;
-  end for;
+  matpN := ChangeRing(A, Zp);
   S,P1,P2:=SmithForm(matpN);            
  
   b:=[];
@@ -591,14 +583,14 @@ basis_kernel:=function(A)
 end function;
 
 
-vanishing_differentials:=function(points,data:e:=1);
+function vanishing_differentials(points, data : e:=1)
 
   // Compute the regular one forms of which the 
   // integrals vanish between all points in points.
 
-  Q:=data`Q; p:=data`p;
+  Q:=data`Q; v:=data`v; p:=data`p;
   
-  g:=genus(Q,p);
+  g := genus(Q, v);
 
   IP1Pi:=[];
   NIP1Pi:=[];
@@ -610,11 +602,11 @@ vanishing_differentials:=function(points,data:e:=1);
 
   Nint:=Minimum(NIP1Pi);
 
-  K:=pAdicField(p,Nint);
-  M:=ZeroMatrix(K,g,#points-1);
+  Qp:=pAdicField(p,Nint);
+  M:=ZeroMatrix(Qp,g,#points-1);
   for i:=1 to g do
     for j:=1 to #points-1 do
-      M[i,j]:=K!reduce_mod_pN_Q(Rationals()!IP1Pi[j][i],p,Nint);
+      M[i,j]:=Qp!reduce_mod_pN_Q(Rationals()!IP1Pi[j][i],p,Nint);
     end for;
   end for;
 

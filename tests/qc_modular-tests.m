@@ -5,11 +5,15 @@ import "misc.m": are_congruent, equivariant_splitting, eval_mat_R, eval_Q, FindQ
 import "applications.m": Q_points, Qp_points, roots_with_prec, separate;
 import "heights.m": E1_tensor_E2, expand_algebraic_function, frob_equiv_iso, height, parallel_transport, parallel_transport_to_z;
 
-K<u> := CyclotomicField(3);
+QQ := RationalField();
+// K = Q(sqrt(13))
+K<u> := NumberField(PolynomialRing(QQ)![-3, -1, 1]);
+//K<u> := CyclotomicField(3);
 OK := Integers(K);
 Kx<x> := PolynomialRing(K);
 Kxy<y> := PolynomialRing(Kx);
-Q := y^4 + (u - 1)*y^3*x + (2*u + 2)*y*x^3 + (3*u + 2)*y^3 - 3*u*y*x^2 - u*x^3 - 3*y^2 + 3*u*y*x + 3*u*x^2 - 2*u*y + (-u + 1)*x + (u + 1);
+Q := 4*x^3*y - x^3- 3*x^2*y^2 + 16*x^2*y+ 3*x^2+ 3*x*y^3 - 11*x*y^2+ 9*x*y+x+ 5*y^3+ y^2+ 2*y;
+//Q := y^4 + (u - 1)*y^3*x + (2*u + 2)*y*x^3 + (3*u + 2)*y^3 - 3*u*y*x^2 - u*x^3 - 3*y^2 + 3*u*y*x + 3*u*x^2 - 2*u*y + (-u + 1)*x + (u + 1);
 
 Cpts := [
   [0,1,0], // j = 1728, D = -4
@@ -29,7 +33,8 @@ Cpts := [
 
 known_aff_pts := [[pt[2]/pt[3], pt[1]/pt[3]] : pt in Cpts | not IsZero(pt[3])];
 
-p := 13;
+//p := 13;
+p := 17;
 v := Factorization(p*OK)[1][1];
 N := 15;
 

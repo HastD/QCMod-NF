@@ -714,20 +714,24 @@ function local_data(P, data)
 
   // For a point P, returns the ramification index of the map x on the residue disk at P
 
-  Q:=data`Q; p:=data`p; W0:=data`W0; Winf:=data`Winf; x0:=P`x; b:=P`b; d:=Degree(Q);
+  Q:=data`Q; v:=data`v; p:=data`p; W0:=data`W0; Winf:=data`Winf; x0:=P`x; b:=P`b; d:=Degree(Q);
+  K := BaseRing(BaseRing(Q));
+
 
   if not is_bad(P,data) then
     eP:=1;
     index:=0;
     return eP,index;
   end if;
-    
-  Fp:=FiniteField(p); Fpx:=RationalFunctionField(Fp); Fpxy:=PolynomialRing(Fpx);
+
+  Fp, res := ResidueClassField(v);
+  Fpx := RationalFunctionField(Fp);
+  Fpxy := PolynomialRing(Fpx);
   f:=Fpxy!0;
   for i:=0 to d do
     cQi := Coefficient(Q, i);
     for j:=0 to Degree(cQi) do
-      f +:= (Fp!Coefficient(cQi, j))*Fpxy.1^i*Fpx.1^j;
+      f +:= res(Coefficient(cQi, j))*Fpxy.1^i*Fpx.1^j;
     end for;
   end for;  
   FFp:=FunctionField(f); // function field of curve mod p
@@ -782,7 +786,7 @@ function local_data(P, data)
         index:=i;
         done:=true;
       end if;
-      i:=i+1;
+      i +:= 1;
     end while;
   end if;
 
@@ -845,7 +849,7 @@ function hensel_lift(fy, root)
 end function;
 
 
-mod_p_prec:=function(fy);
+function mod_p_prec(fy)
 
   // Finds the t-adic precision necessary to separate the roots
   // of the polynomial fy over Qp[[t]] modulo p and start Hensel lift.
@@ -873,7 +877,7 @@ mod_p_prec:=function(fy);
     end if;
     factor:=fac[i][1];
     if Degree(factor) eq 1 and LeadingCoefficient(factor) eq 1 then
-      zeros:=Append(zeros,-Coefficient(factor,0));
+      Append(~zeros,-Coefficient(factor,0));
     end if;
   end for;
 
@@ -887,7 +891,7 @@ mod_p_prec:=function(fy);
       if Minimum(prec,v1) gt 2*v2 then
         done:=true;
       end if;
-      prec:=prec+1;
+      prec +:= 1;
     end while;
     modpprec:=Maximum(modpprec,prec);
   end for;
@@ -903,7 +907,7 @@ mod_p_prec:=function(fy);
 end function;
 
 
-approx_root:=function(fy,y0,modpprec,expamodp)
+function approx_root(fy,y0,modpprec,expamodp)
 
   // Computes an approximation to t-adic precision modpprec of 
   // a root of the polynomial fy over Qp[[t]] which is congruent to:
@@ -936,31 +940,31 @@ approx_root:=function(fy,y0,modpprec,expamodp)
     root:=roots[i][1];
     Nroot:=roots[i][2];
     if Nroot lt modpprec then
-      roots:=Remove(roots,i);
+      Remove(~roots,i);
       newroot:=root+Kty.1*Kt.1^Nroot;
       C:=Coefficients(fy);
       fynewroot:=Kty!0;
       for j:=1 to #C do
-        fynewroot:=fynewroot+(Kt!C[j])*newroot^(j-1);
+        fynewroot +:= (Kt!C[j])*newroot^(j-1);
       end for;
       fynewroot:=Qty!Kty!fynewroot;
       fznewroot:=Qzt!0;
       for j:=0 to Degree(fynewroot) do
         for k:=0 to tprec-1 do
-          fznewroot:=fznewroot+Coefficient(Coefficient(fynewroot,j),k)*(Qz.1)^j*(Qzt.1)^k;
+          fznewroot +:= Coefficient(Coefficient(fynewroot,j),k)*(Qz.1)^j*(Qzt.1)^k;
         end for;
       end for;
       fac:=Factorisation(Zpz!Coefficient(fznewroot,Valuation(fznewroot)));
       for j:=1 to #fac do
         if (Degree(fac[j][1]) eq 1) and (Coefficient(fac[j][1],1) eq 1) then
-          sol:=-Coefficient(fac[j][1],0); 
+          sol := -Coefficient(fac[j][1],0); 
           if Fp!sol eq Coefficient(expamodp,Nroot) then
-            roots:=Insert(roots,i,[*Evaluate(newroot,sol),Nroot+1*]);
+            Insert(~roots,i,[*Evaluate(newroot,sol),Nroot+1*]);
           end if;
         end if;
       end for;
     else
-      i:=i+1;
+      i +:= 1;
     end if;
   end while;
 
@@ -983,7 +987,7 @@ approx_root:=function(fy,y0,modpprec,expamodp)
 end function;
 
 
-mod_p_expansion:=function(f,place,tmodp,modpprec);
+function mod_p_expansion(f,place,tmodp,modpprec);
 
   // Finds the power series expansion of f in the function field
   // modulo p at place with respect to local parameter tmodp to
@@ -997,10 +1001,10 @@ mod_p_expansion:=function(f,place,tmodp,modpprec);
   expamodp:=Fpt!0;
   for i:=0 to modpprec-1 do
     val:=Evaluate(f,place);
-    expamodp:=expamodp+val*Fpt.1^i;
+    expamodp +:= val*Fpt.1^i;
     f:=(f-val)/tmodp;
   end for;
-  
+
   return expamodp;
   
 end function;
@@ -1024,24 +1028,18 @@ local_coord:=function(P,prec,data);
     error "Cannot compute local parameter at a bad point which is not very bad";
   end if;
 
-  x0:=P`x; Q:=data`Q; p:=data`p; N:=data`N; W0:=data`W0; Winf:=data`Winf; d:=Degree(Q); b:=P`b;
-  K:=Parent(x0); Kt<t>:=PowerSeriesRing(K,prec); Kty:=PolynomialRing(Kt);
-  Qt:=RationalFunctionField(RationalField()); Qty:=PolynomialRing(Qt);
-  Fp:=FiniteField(p);
-
-  f:=Qty!0;
-  for i:=0 to d do
-    for j:=0 to Degree(Coefficient(Q,i)) do
-      f:=f+Coefficient(Coefficient(Q,i),j)*Qty.1^i*Qt.1^j;
-    end for;
-  end for;  
-  FF:=FunctionField(f); // function field of curve
+  x0:=P`x; Q:=data`Q; v:=data`v; p:=data`p; N:=data`N; W0:=data`W0; Winf:=data`Winf; d:=Degree(Q); b:=P`b;
+  Qp := Parent(x0); Qpt<t> := PowerSeriesRing(Qp,prec); Qpty := PolynomialRing(Qpt);
+  K := BaseRing(BaseRing(Q));
+  Kt := RationalFunctionField(K); Kty := PolynomialRing(Kt);
+  Fp := FiniteField(p);
+  FF := FunctionField(Kty!Q); // function field of curve
 
   if not is_bad(P,data) then // finite good point
 
     xt:=t+x0;
 
-    W0invx0:=Transpose(Evaluate(W0^(-1),x0));
+    W0invx0:=Transpose(eval_ff_mat_Qp(W0^(-1), x0, v));
     ypowers:=Vector(b)*ChangeRing(W0invx0,Parent(b[1]));
     y0:=ypowers[2];
 
@@ -1050,13 +1048,13 @@ local_coord:=function(P,prec,data);
     for i:=1 to #C do
       D[i]:=Evaluate(C[i],xt); 
     end for;
-    fy:=Kty!D;
+    fy:=Qpty!D;
     derfy:=Derivative(fy);
 
-    yt:=hensel_lift(fy,Kt!y0);
+    yt:=hensel_lift(fy,Qpt!y0);
 
     ypowerst:=[];
-    ypowerst[1]:=FieldOfFractions(Kt)!1;
+    ypowerst[1]:=FieldOfFractions(Qpt)!1;
     ypowerst[2]:=yt;
     for i:=3 to d do
       ypowerst[i]:=ypowerst[i-1]*yt;
@@ -1065,7 +1063,7 @@ local_coord:=function(P,prec,data);
 
     btnew:=[];
     for i:=1 to d do
-      btnew[i]:=Kt!bt[i];
+      btnew[i]:=Qpt!bt[i];
     end for;
     bt:=btnew;
 
@@ -1096,7 +1094,7 @@ local_coord:=function(P,prec,data);
         if assigned data`minpolys and data`minpolys[2][1,i+1] ne 0 then
           poly:=data`minpolys[2][1,i+1]; 
         else 
-          poly:=minpoly(FF!(1/Qt.1),bfun[i]);
+          poly:=minpoly(FF!(1/Kt.1),bfun[i]);
         end if;
 
         C:=Coefficients(poly);
@@ -1104,7 +1102,7 @@ local_coord:=function(P,prec,data);
         for j:=1 to #C do
           D[j]:=Evaluate(C[j],xt); 
         end for;
-        fy:=Kty!D;
+        fy:=Qpty!D;
         derfy:=Derivative(fy);
 
         modpprec:=mod_p_prec(fy);
@@ -1127,7 +1125,7 @@ local_coord:=function(P,prec,data);
       if assigned data`minpolys and data`minpolys[2][index+1,1] ne 0 then
         poly:=data`minpolys[2][index+1,1];
       else
-        poly:=minpoly(bfun[index],FF!1/(Qt.1));
+        poly:=minpoly(bfun[index],FF!1/(Kt.1));
       end if;
 
       C:=Coefficients(poly);
@@ -1135,7 +1133,7 @@ local_coord:=function(P,prec,data);
       for j:=1 to #C do
         D[j]:=Evaluate(C[j],t+b[index]); 
       end for;
-      fy:=Kty!D;
+      fy:=Qpty!D;
       derfy:=Derivative(fy);
 
       modpprec:=mod_p_prec(fy);
@@ -1169,7 +1167,7 @@ local_coord:=function(P,prec,data);
             D[j]:=Evaluate(C[j],t+b[index]); 
           end for;
 
-          fy:=Kty!D;
+          fy:=Qpty!D;
           derfy:=Derivative(fy);
 
           modpprec:=mod_p_prec(fy);
@@ -1215,7 +1213,7 @@ local_coord:=function(P,prec,data);
         if assigned data`minpolys and data`minpolys[1][1,i+1] ne 0 then
           poly:=data`minpolys[1][1,i+1];
         else
-          poly:=minpoly(FF!Qt.1,bfun[i]);
+          poly:=minpoly(FF!Kt.1,bfun[i]);
         end if;
 
         C:=Coefficients(poly);
@@ -1223,7 +1221,7 @@ local_coord:=function(P,prec,data);
         for j:=1 to #C do
           D[j]:=Evaluate(C[j],xt); 
         end for;
-        fy:=Kty!D;
+        fy:=Qpty!D;
         derfy:=Derivative(fy);
 
         modpprec:=mod_p_prec(fy);
@@ -1246,7 +1244,7 @@ local_coord:=function(P,prec,data);
       if assigned data`minpolys and data`minpolys[1][index+1,1] ne 0 then
         poly:=data`minpolys[1][index+1,1];
       else
-        poly:=minpoly(bfun[index],FF!Qt.1);
+        poly:=minpoly(bfun[index],FF!Kt.1);
       end if;
 
       C:=Coefficients(poly);
@@ -1254,7 +1252,7 @@ local_coord:=function(P,prec,data);
       for j:=1 to #C do
         D[j]:=Evaluate(C[j],t+b[index]); 
       end for;
-      fy:=Kty!D;
+      fy:=Qpty!D;
       derfy:=Derivative(fy);
 
       modpprec:=mod_p_prec(fy);
@@ -1288,7 +1286,7 @@ local_coord:=function(P,prec,data);
             D[j]:=Evaluate(C[j],t+b[index]);
           end for;
 
-          fy:=Kty!D;
+          fy:=Qpty!D;
 
           derfy:=Derivative(fy);
 

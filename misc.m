@@ -5,7 +5,7 @@ freeze;
 //////////////////////////
 
 import "coho.m": ord_r_mat;
-import "singleintegrals.m": is_bad, coleman_integrals_on_basis_divisors;
+import "singleintegrals.m": is_bad, coleman_integrals_on_basis_divisors, eval_poly_Qp;
 
 
 // Algebraic recognition for element in Qp.
@@ -16,8 +16,13 @@ function algdepQp(a,deg)
     RR := RealField(500);
     PolZ<x>:=PolynomialRing(ZZ);
    
-    p := Prime(Parent(a));
-    m := Precision(Parent(a));
+    Qp := Parent(a);
+    p := Prime(Qp);
+    if Precision(Qp) eq Infinity() then
+      m := Precision(a);
+    else
+      m := Precision(Qp);
+    end if;
     N := p^m;
     
     if Valuation(a) ge m then
@@ -75,8 +80,9 @@ end function;
 
 function eq_split(Aq)
   assert Nrows(Aq) eq Ncols(Aq) and IsEven(Nrows(Aq));
+  K := BaseRing(Aq);
   g := Nrows(Aq) div 2;
-  M := ZeroMatrix(RationalField(), 2*g^2, 2*g^2);
+  M := ZeroMatrix(K, 2*g^2, 2*g^2);
   for i := 1 to 2*g do
     for j := 1 to g do
       for n := 0 to 2*g-1 do
@@ -89,7 +95,7 @@ function eq_split(Aq)
   end for;
   N := Kernel(Transpose(M)); // The elements are vectors of length 2g^2. 
 
-  V := VectorSpace(Rationals(), 2*g^2);
+  V := VectorSpace(K, 2*g^2);
   L1 := [V!v : v in Basis(N)];
   V1 := sub<V | L1>;  // Space of solutions to matrix equation
   
@@ -142,7 +148,7 @@ function eq_split(Aq)
     assert Dimension(W) gt 0; // If you end up here, you've found a bug. 
   end if;
 
-  bas := [Matrix(RationalField(), 2*g, g, Eltseq(w)) : w in Basis(W)]; 
+  bas := [Matrix(K, 2*g, g, Eltseq(w)) : w in Basis(W)]; 
   // bas is the basis of the intersection, written as matrices. 
   // Still need to add the condition that the top block is (a multiple of) E_g
   j := 0;
@@ -355,14 +361,10 @@ end function;
 
 
 
-function eval_Q(Q, x0, y0)
-  Qp := Parent(x0);
-  coeffs_Qp:=[ChangeRing(c,Qp):c in Coefficients(Q)];
-  res := 0;
-  for i := 1 to #coeffs_Qp do
-    res +:= Evaluate(coeffs_Qp[i], x0)*y0^(i-1);
-  end for;
-  return res;
+function eval_Q(Q, x0, y0, v)
+  Qpy := PolynomialRing(Parent(x0));
+  Qx0y := Qpy![eval_poly_Qp(f, x0, v) : f in Coefficients(Q)];
+  return Evaluate(Qx0y, y0);
 end function;
 
 
@@ -494,34 +496,35 @@ end function;
 
 function equivariant_splitting(Z)
 
-        assert NumberOfColumns(Z) eq NumberOfRows(Z);
-        g := Integers()!(NumberOfRows(Z)/2);
-        assert Submatrix(Z,g+1,1,g,g) eq 0;
-        mxList := []; 
-        upLeft := Submatrix(Z,1,1,g,g);
-        downRight := Submatrix(Z,g+1,g+1,g,g);
-        upRight := Submatrix(Z,1,g+1,g,g);
-        for i in [g..(g^2 + g - 1)] do
-                row := i div g;
-                col := (i mod g) + 1;
-                zed := ZeroMatrix(Rationals(),g,g);
-                zed[row][col]:= 1;
-                mxList := mxList cat [Eltseq(zed * downRight - upLeft * zed)];
-        end for;
-        vecList := Eltseq(upRight);
-        mat := Matrix(mxList);
-        wec := Vector(vecList);
-        vec := Solution(mat,wec);
-        mat2 := Matrix(g,g,Eltseq(vec));
-        blocks := [IdentityMatrix(Rationals(),g), mat2,ZeroMatrix(Rationals(),g,g),IdentityMatrix(Rationals(),g)];
-        sol := BlockMatrix(2,2,blocks);
+  assert NumberOfColumns(Z) eq NumberOfRows(Z);
+  K := BaseRing(Z);
+  g := Integers()!(NumberOfRows(Z)/2);
+  assert Submatrix(Z,g+1,1,g,g) eq 0;
+  mxList := []; 
+  upLeft := Submatrix(Z,1,1,g,g);
+  downRight := Submatrix(Z,g+1,g+1,g,g);
+  upRight := Submatrix(Z,1,g+1,g,g);
+  for i in [g..(g^2 + g - 1)] do
+    row := i div g;
+    col := (i mod g) + 1;
+    zed := ZeroMatrix(K,g,g);
+    zed[row][col]:= 1;
+    mxList := mxList cat [Eltseq(zed * downRight - upLeft * zed)];
+  end for;
+  vecList := Eltseq(upRight);
+  mat := Matrix(mxList);
+  wec := Vector(vecList);
+  vec := Solution(mat,wec);
+  mat2 := Matrix(g,g,Eltseq(vec));
+  blocks := [IdentityMatrix(K,g), mat2,ZeroMatrix(K,g,g),IdentityMatrix(K,g)];
+  sol := BlockMatrix(2,2,blocks);
 
-        // Check that this conjugates Z to a block diagonal matrix (2 blocks).
-        Znew := sol^-1 * Z * sol;
-        assert Submatrix(Znew,1,g+1,g,g) eq 0;
-        //print "This matrix should be block diagonal: ", Znew;
+  // Check that this conjugates Z to a block diagonal matrix (2 blocks).
+  Znew := sol^-1 * Z * sol;
+  assert Submatrix(Znew,1,g+1,g,g) eq 0;
+  //print "This matrix should be block diagonal: ", Znew;
 
-        // We want to return a different matrix
-        return BlockMatrix(2,1,[IdentityMatrix(Rationals(),g), -mat2]);
-  
+  // We want to return a different matrix
+  return BlockMatrix(2,1,[IdentityMatrix(K,g), -mat2]);
+
 end function;
