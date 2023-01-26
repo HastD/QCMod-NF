@@ -6,14 +6,18 @@ import "applications.m": Q_points, Qp_points, roots_with_prec, separate;
 import "heights.m": E1_tensor_E2, expand_algebraic_function, frob_equiv_iso, height, parallel_transport, parallel_transport_to_z;
 
 QQ := RationalField();
-// K = Q(sqrt(13))
-K<u> := NumberField(PolynomialRing(QQ)![-3, -1, 1]);
-//K<u> := CyclotomicField(3);
+K<u> := CyclotomicField(3);
+P2<X, Y, Z> := ProjectiveSpace(K, 2);
+Q_homog := Y^4 + (u - 1)*Y^3*X + (2*u + 2)*Y*X^3 + (3*u + 2)*Y^3*Z - 3*u*Y*X^2*Z - u*X^3*Z
+  - 3*Y^2*Z^2 + 3*u*Y*X*Z^2 + 3*u*X^2*Z^2 - 2*u*Y*Z^3 + (-u + 1)*X*Z^3 + (u + 1)*Z^4;
+C := Curve(P2, Q_homog);
 OK := Integers(K);
 Kx<x> := PolynomialRing(K);
 Kxy<y> := PolynomialRing(Kx);
-Q := 4*x^3*y - x^3- 3*x^2*y^2 + 16*x^2*y+ 3*x^2+ 3*x*y^3 - 11*x*y^2+ 9*x*y+x+ 5*y^3+ y^2+ 2*y;
-//Q := y^4 + (u - 1)*y^3*x + (2*u + 2)*y*x^3 + (3*u + 2)*y^3 - 3*u*y*x^2 - u*x^3 - 3*y^2 + 3*u*y*x + 3*u*x^2 - 2*u*y + (-u + 1)*x + (u + 1);
+Q := Evaluate(Q_homog, [x, y, 1]);
+
+// other example: X_{S_4}(13):
+//Q := 4*x^3*y - x^3- 3*x^2*y^2 + 16*x^2*y+ 3*x^2+ 3*x*y^3 - 11*x*y^2+ 9*x*y+x+ 5*y^3+ y^2+ 2*y;
 
 Cpts := [
   [0,1,0], // j = 1728, D = -4
@@ -33,8 +37,7 @@ Cpts := [
 
 known_aff_pts := [[pt[2]/pt[3], pt[1]/pt[3]] : pt in Cpts | not IsZero(pt[3])];
 
-//p := 13;
-p := 17;
+p := 13;
 v := Factorization(p*OK)[1][1];
 N := 15;
 
@@ -91,3 +94,32 @@ teichpoints := [**];
 for i := 1 to numberofpoints do
   teichpoints[i] := is_bad(Qppoints[i],data) select 0  else teichmueller_pt(Qppoints[i],data); // No precision loss
 end for;
+
+correspondences := [
+  Matrix(RationalField(), 6, 6,
+  [ 0, -1, 3, 0, -2, 1,
+    0, -1, 1, 2, 0, 2,
+    0, -1, 1, -1, -2, 0,
+    0, 0, -1, 0, 0, 0,
+    0, 0, -1, -1, -1, -1,
+    1, 1, 0, 3, 1, 1 ]),
+  Matrix(RationalField(), 6, 6,
+    [ -1, 0, 1, 0, -1, 0,
+      2, 1, -3, 1, 0, -2,
+      0, 1, 0, 0, 2, 0,
+      0, 1, 0, -1, 2, 0,
+      -1, 0, 2, 0, 1, 1,
+      0, -2, 0, 1, -3, 0 ])
+];
+
+Z := correspondences[1];    
+printf "Computing Hodge filtration for correspondence %o.\n", 1;
+hodge_prec := 5; 
+eta,betafil,gammafil,hodge_loss := HodgeData(Q,g,W0,data`basis,Z,bpt : r:=r, prec:=hodge_prec);
+printf "eta = %o\nbetafil = %o\ngammafil = %o\n", eta, betafil, gammafil;
+
+Z := correspondences[2];    
+printf "Computing Hodge filtration for correspondence %o.\n", 2;
+hodge_prec := 5; 
+eta,betafil,gammafil,hodge_loss := HodgeData(Q,g,W0,data`basis,Z,bpt : r:=r, prec:=hodge_prec);
+printf "eta = %o\nbetafil = %o\ngammafil = %o\n", eta, betafil, gammafil;
