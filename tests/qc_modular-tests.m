@@ -112,14 +112,30 @@ correspondences := [
       0, -2, 0, 1, -3, 0 ])
 ];
 
-Z := correspondences[1];    
-printf "Computing Hodge filtration for correspondence %o.\n", 1;
-hodge_prec := 5; 
-eta,betafil,gammafil,hodge_loss := HodgeData(Q,g,W0,data`basis,Z,bpt : r:=r, prec:=hodge_prec);
-printf "eta = %o\nbetafil = %o\ngammafil = %o\n", eta, betafil, gammafil;
+for l := 1 to #correspondences do
+  hodge_prec := 5; 
+  Z := correspondences[l];
+  printf "Computing Hodge filtration for correspondence %o.\n", l;
+  eta, betafil, gammafil, hodge_loss := HodgeData(Q, g, W0, data`basis, Z, bpt : r:=r, prec:=hodge_prec);
+  printf "eta = %o\nbetafil = %o\ngammafil = %o\n", eta, betafil, gammafil;
+  Ncorr := N;
+  Nhodge := Ncorr + Min(0, hodge_loss);
 
-Z := correspondences[2];    
-printf "Computing Hodge filtration for correspondence %o.\n", 2;
-hodge_prec := 5; 
-eta,betafil,gammafil,hodge_loss := HodgeData(Q,g,W0,data`basis,Z,bpt : r:=r, prec:=hodge_prec);
-printf "eta = %o\nbetafil = %o\ngammafil = %o\n", eta, betafil, gammafil;
+  b0 := teichmueller_pt(bQ,data);
+  vprintf QCMod: " Computing Frobenius structure for correspondence %o.\n", l;
+  b0pt := [RationalField()!c : c in xy_coordinates(b0, data)]; // xy-coordinates of P
+  G, NG := FrobeniusStructure(data, Z, eta, b0pt : N:=Nhodge);
+  printf "NG = %o\n", NG;
+  G_list := [**]; // evaluations of G at Teichmuellers of all good points (0 if bad)
+  for i := 1 to numberofpoints do
+    if is_bad(Qppoints[i],data) then
+      G_list[i]:=0;
+    else
+      P  := teichpoints[i]; // P is the Teichmueller point in this disk
+      pt := [IntegerRing()!c : c in xy_coordinates(P, data)]; // xy-coordinates of P
+      G_list[i] := eval_mat_R(G, pt, r, v); // P is finite good, so no precision loss. 
+    end if;
+  end for;
+  printf "G_list = %m\n", G_list;
+  Ncurrent := Min(Nhodge, NG);
+end for;

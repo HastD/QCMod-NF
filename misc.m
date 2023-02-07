@@ -6,6 +6,7 @@ freeze;
 
 import "coho.m": ord_r_mat;
 import "singleintegrals.m": is_bad, coleman_integrals_on_basis_divisors, eval_poly_Qp;
+import "froblift.m": getrings;
 
 
 // Algebraic recognition for element in Qp.
@@ -168,13 +169,16 @@ end function;
 
 
 
-eval_R:=function(f,pt,r)
+function eval_R(f, pt, r, v)
 
   // Evaluate an element of R at x=x0, y=y0.
 
-  R:=Parent(f); S:=BaseRing(R); Ox:=BaseRing(S); O:=BaseRing(Ox);
+  pN := Characteristic(Parent(f));
+  assert IsPrimePower(pN);
+  N := Factorization(pN)[1][2];
+  O, red, Ox, S, R := getrings(v, N);
 
-  zR:=(Ox!r)/LeadingCoefficient(r);
+  zR := Ox![red(c) : c in Eltseq(r)] / red(LeadingCoefficient(r));
 
   x0:=O!pt[1];
   y0:=O!pt[2];
@@ -185,7 +189,7 @@ eval_R:=function(f,pt,r)
     val:=Valuation(C[i]);
     D:=Coefficients(C[i]);
     for j:=1 to #D do
-      ev:=ev+Evaluate(D[j],x0)*z0^(val+j-1)*y0^(i-1);
+      ev +:= Evaluate(D[j], x0) * z0^(val+j-1) * y0^(i-1);
     end for;
   end for;
 
@@ -193,7 +197,7 @@ eval_R:=function(f,pt,r)
 end function;
 
 
-eval_mat_R:=function(A,pt,r)
+eval_mat_R:=function(A, pt, r, v)
 
   // Evaluate a matrix over R at x=x0, y=y0.
 
@@ -202,7 +206,7 @@ eval_mat_R:=function(A,pt,r)
   B:=ZeroMatrix(O,NumberOfRows(A),NumberOfColumns(A));
   for i:=1 to NumberOfRows(A) do
     for j:=1 to NumberOfColumns(A) do
-      B[i,j]:=eval_R(A[i,j],pt,r);
+      B[i,j] := eval_R(A[i,j], pt, r, v);
     end for;
   end for;
 
@@ -210,27 +214,28 @@ eval_mat_R:=function(A,pt,r)
 end function;
 
 
-compute_F:=function(Q,W0,Winf,f0,finf,fend)
+function compute_F(Q, W0, Winf, f0, finf, fend)
 
   // Given functions f0,finf and fend, as vectors of coefficients w.r.t. b^0,b^inf,b^0 respectively, 
   // return f0+finf+fend as a vector w.r.t. b^0 (so convert finf from b^inf to b^0 and take the sum). 
-  
+
   d:=Degree(Q);
-  W:=Winf*W0^(-1);
+  K := BaseRing(BaseRing(Q));
+  W := Winf*W0^(-1);
 
-  Qxzzinvd:=Parent(f0);
-  Qxzzinv:=BaseRing(Qxzzinvd);
-  x1:=Qxzzinv!(BaseRing(Qxzzinv).1);
-  Qxxinv:=LaurentSeriesRing(RationalField());
+  Kxzzinvd := Parent(f0);
+  Kxzzinv := BaseRing(Kxzzinvd);
+  x1 := Kxzzinv!(BaseRing(Kxzzinv).1);
+  Kxxinv := LaurentSeriesRing(K);
 
-  conv:=Qxzzinvd!Evaluate(Evaluate(finf,Qxxinv.1)*Evaluate(W,Qxxinv.1),x1); // finf converted to basis b^0
-  F:=f0+conv+fend;
+  conv := Kxzzinvd!Evaluate(Evaluate(finf, Kxxinv.1) * Evaluate(W, Kxxinv.1), x1); // finf converted to basis b^0
+  F := f0 + conv + fend;
 
   return F, conv;
 end function;
 
 
-Qxzzinvd_to_R:=function(f,Q,p,r,R,W0)
+function Kxzzinvd_to_R(f, Q, red, r, R, W0)
 
   // Convert from Q[x,z,1/z]^d to R, using the basis b^0.
 
@@ -242,27 +247,23 @@ Qxzzinvd_to_R:=function(f,Q,p,r,R,W0)
   z:=S.1;
   x:=Ox.1;
 
-  rQx:=Parent(Numerator(W0[1,1]))!r;
-  lc:=LeadingCoefficient(rQx);
-  rQx:=rQx/lc; // rQx now corresponds to z=r/LeadingCoefficient(r)
+  rKx := BaseRing(Q)!r;
+  rKx := rKx / LeadingCoefficient(rKx);
 
-  ordrW0:=ord_r_mat(W0,rQx);
+  ordrW0 := ord_r_mat(W0, rKx);
 
-  b0:=[];
+  b0 := [];
   for i:=1 to d do
-    b0i:=R!0;
-    for j:=1 to d do
-      b0i:=b0i+z^(ordrW0)*(R!Ox!(Numerator(W0[i,j]*rQx^(-ordrW0))))*y^(j-1);
-    end for;
-    b0:=Append(b0,b0i);
+    b0i := &+[z^(ordrW0)*(R!Ox!(Numerator(W0[i,j]*rKx^(-ordrW0))))*y^(j-1) : j in [1 .. d]];
+    Append(~b0, b0i);
   end for;
 
   f_R:=R!0;  
   for i:=1 to d do
     if f[i] ne 0 then
       for j:=Valuation(f[i]) to Degree(f[i]) do
-        coef:=Ox!Coefficient(f[i],j);
-        f_R:=f_R+coef*z^j*b0[i]; 
+        coef := Ox![red(c) : c in Eltseq(Coefficient(f[i], j))];
+        f_R +:= coef*z^j*b0[i]; 
       end for;
     end if;
   end for;
