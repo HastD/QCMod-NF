@@ -5,8 +5,10 @@ import "coho.m": ord_0_mat, ord_inf_mat;
 
 function integral_denom(c)
   // Integer d such that d*c is integral
-  _, d := IsIntegral(c);
-  return d;
+  if Parent(c / 1) eq RationalField() then
+    c := RationalsAsNumberField()!c;
+  end if;
+  return Integers()!Denominator(c * Integers(Parent(c)));
 end function;
 
 function coeffs_denom(A)
@@ -28,7 +30,7 @@ function reduce_mod_vN(v, N)
   return red, O;
 end function;
 
-function reduce_mod_pN_K_list(A, v, N)
+function reduce_mod_pN_K_list(A, v, N : balanced := false)
 
   // Reduce a list of elements A over K mod p^N, where v|p splits in K
 
@@ -49,6 +51,9 @@ function reduce_mod_pN_K_list(A, v, N)
   unitinv := red(unit)^(-1);
   A_red := [unitinv*red(c) : c in A];
   ChangeUniverse(~A_red, IntegerRing());
+  if balanced then
+    A_red := [2*c ge m select c - m else c : c in A_red];
+  end if;
   ChangeUniverse(~A_red, K);
   A_red := [c/ppow : c in A_red];
   return A_red;
@@ -56,7 +61,7 @@ end function;
 
 function reduce_mod_pN_K(f,v,N)
   // Reduce a number field element f mod p^N, where v|p splits in K
-  return reduce_mod_pN_K_list([f], v, N)[1];
+  return reduce_mod_pN_K_list([f], v, N : balanced := true)[1];
 end function;
 
 function reduce_mod_pN_Kx(f, v, N)
@@ -99,11 +104,12 @@ function inv_Ki(f, v, N)
 
   // Invert an element of Ki mod p^N
 
+  K := NumberField(Order(v));
   Ki := Parent(f);
   ri := DefiningPolynomial(Ki);
 
   C := Eltseq(f);  
-  val := Minimum([Valuation(c, v) : c in C]);
+  val := Minimum([Valuation(K!c, v) : c in C]);
 
   N +:= val;
   p := Norm(v);
@@ -118,7 +124,7 @@ function inv_Ki(f, v, N)
   fmodp := Fpxmodri![res(c) : c in Eltseq(f)];
 
   invmodp := 1/fmodp;
-  inv := Ki!ChangeUniverse(Coefficients(invmodp), IntegerRing());
+  inv := Evaluate(PolynomialRing(K)!ChangeUniverse(Coefficients(invmodp), IntegerRing()), Ki.1);
 
   prec := [];
   while N gt 1 do

@@ -38,5 +38,6 @@ fprintf output_file, "_<z> := LaurentSeriesRing(PolynomialRing(K));\n\n";
 
 out := Sprintf("data := %m;\n\n", data);
 out := ReplaceString(out, "\n ! ", "\n "); // hack to handle bug in Magma string formatting
+out := ReplaceString(out, "EquationOrder(Polynomial(\\[1, 1, 1]))", "Integers(CyclotomicField(3))");
 Write(output_file, out);
 "Coleman data recorded.";
