@@ -3,7 +3,7 @@ import "auxpolys.m": auxpolys, log;
 import "singleintegrals.m": evalf0, is_bad, local_coord, set_point, tadicprec, teichmueller_pt, xy_coordinates;
 import "misc.m": are_congruent, equivariant_splitting, eval_mat_R, eval_Q, FindQpointQp, fun_field, alg_approx_Qp, minprec, minval, minvalp;
 import "applications.m": Q_points, Qp_points, roots_with_prec, separate;
-import "heights.m": E1_tensor_E2, expand_algebraic_function, frob_equiv_iso, height, parallel_transport, parallel_transport_to_z;
+import "heights.m": E1_tensor_E2, expand_algebraic_function, frob_equiv_iso, height;
 
 K<u> := CyclotomicField(3);
 OK := Integers(K);

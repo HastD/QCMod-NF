@@ -1,4 +1,4 @@
-short_coleman_data_format := recformat<Q, p, N, g, W0, Winf, r, Delta, s, G0, Ginf, e0, einf, delta, basis, integrals, F, Nmax, minpolys, cpm, subspace, ordinary>;
+short_coleman_data_format := recformat<Q, p, v, N, g, W0, Winf, r, Delta, s, G0, Ginf, e0, einf, delta, basis, integrals, F, Nmax, minpolys, cpm, subspace, ordinary>;
 
 short_coleman_data_list := [* *];
 

@@ -3,7 +3,7 @@ import "auxpolys.m": auxpolys, log;
 import "singleintegrals.m": evalf0, is_bad, local_coord, set_point, tadicprec, teichmueller_pt, xy_coordinates;
 import "misc.m": are_congruent, equivariant_splitting, eval_mat_R, eval_Q, FindQpointQp, fun_field, alg_approx_Qp, minprec, minval, minvalp;
 import "applications.m": Q_points, Qp_points, roots_with_prec, separate;
-import "heights.m": E1_tensor_E2, expand_algebraic_function, frob_equiv_iso, height, parallel_transport, parallel_transport_to_z;
+import "heights.m": E1_tensor_E2, expand_algebraic_function, frob_equiv_iso, height;
 
 QQ := RationalField();
 K<u> := CyclotomicField(3);
@@ -56,6 +56,8 @@ basis1 := [[sympl_basis[i,j] : j in [1..Degree(Q)]] : i in [g+1..2*g]];  // basi
 time data := ColemanData(Q, v, N : useU:=true,  basis0:=basis0, basis1:=basis1);
 "Coleman data constructed.";
 
+prec := Max(100, tadicprec(data, 1));
+
 "Finding points...";
 Qpoints := Q_points(data, 100 : known_points:=known_aff_pts);
 Qppoints := Qp_points(data : Nfactor := 1.5);
@@ -95,22 +97,10 @@ for i := 1 to numberofpoints do
   teichpoints[i] := is_bad(Qppoints[i],data) select 0  else teichmueller_pt(Qppoints[i],data); // No precision loss
 end for;
 
-correspondences := [
-  Matrix(RationalField(), 6, 6,
-  [ 0, -1, 3, 0, -2, 1,
-    0, -1, 1, 2, 0, 2,
-    0, -1, 1, -1, -2, 0,
-    0, 0, -1, 0, 0, 0,
-    0, 0, -1, -1, -1, -1,
-    1, 1, 0, 3, 1, 1 ]),
-  Matrix(RationalField(), 6, 6,
-    [ -1, 0, 1, 0, -1, 0,
-      2, 1, -3, 1, 0, -2,
-      0, 1, 0, 0, 2, 0,
-      0, 1, 0, -1, 2, 0,
-      -1, 0, 2, 0, 1, 1,
-      0, -2, 0, 1, -3, 0 ])
-];
+load "data/NF-example-test-data.m";
+correspondences := test_NF`corresp;
+
+c1s := [];
 
 for l := 1 to #correspondences do
   hodge_prec := 5; 
@@ -122,7 +112,7 @@ for l := 1 to #correspondences do
   Nhodge := Ncorr + Min(0, hodge_loss);
 
   b0 := teichmueller_pt(bQ,data);
-  vprintf QCMod: " Computing Frobenius structure for correspondence %o.\n", l;
+  printf " Computing Frobenius structure for correspondence %o.\n", l;
   b0pt := [RationalField()!c : c in xy_coordinates(b0, data)]; // xy-coordinates of P
   G, NG := FrobeniusStructure(data, Z, eta, b0pt : N:=Nhodge);
   printf "NG = %o\n", NG;
@@ -138,4 +128,45 @@ for l := 1 to #correspondences do
   end for;
   printf "G_list = %m\n", G_list;
   Ncurrent := Min(Nhodge, NG);
+
+  printf " Computing parallel transport for correspondence %o.\n", l;
+  PhiAZb_to_b0, Nptb0 := ParallelTransport(bQ,b0,Z,eta,data:prec:=prec,N:=Nhodge);
+  for i := 1 to 2*g do
+    PhiAZb_to_b0[2*g+2,i+1] := -PhiAZb_to_b0[2*g+2,i+1];
+  end for;
+
+  PhiAZb := [**]; // Frobenius on the phi-modules A_Z(b,P) (0 if P bad)
+
+  Ncurrent := Min(Ncurrent, Nptb0);
+  Nfrob_equiv_iso := Ncurrent;
+  minvalPhiAZbs := [0 : i in [1..numberofpoints]];
+  for i := 1 to numberofpoints do
+
+    if G_list[i] eq 0 then
+      PhiAZb[i] := 0;
+    else 
+      pti, Npti := ParallelTransport(teichpoints[i],Qppoints[i],Z,eta,data:prec:=prec,N:=Nhodge);
+      isoi, Nisoi := frob_equiv_iso(G_list[i],data,Ncurrent);
+      MNi := Npti lt Nisoi select Parent(pti) else Parent(isoi);
+      PhiAZb[i] := MNi!(pti*PhiAZb_to_b0*isoi);
+      Nfrob_equiv_iso := Min(Nfrob_equiv_iso, minprec(PhiAZb[i]));
+      minvalPhiAZbs[i] := minval(PhiAZb[i]);
+    end if;
+  end for;
+  Ncurrent := Nfrob_equiv_iso;
+  Append(~c1s, Min(minvalPhiAZbs));
+
+  PhiAZb_to_z := [**]; // Frobenius on the phi-modules A_Z(b,z) for z in residue disk of P (0 if P bad)
+  for i := 1 to numberofpoints do
+    PhiAZb_to_z[i] := G_list[i] eq 0 select 0 else
+      ParallelTransportToZ(Qppoints[i],Z,eta,data:prec:=prec,N:=Nhodge)*PhiAZb[i]; 
+  end for;
+
+  gammafil_listb_to_z := [* 0 : k in [1..numberofpoints] *]; // evaluations of gammafil at local coordinates for all points 
+  print "Computing expansions of the filtration-respecting function gamma_fil.\n";
+  for i := 1 to numberofpoints do
+    if G_list[i] ne 0 then
+      gammafil_listb_to_z[i] := expand_algebraic_function(Qppoints[i], gammafil, data, Nhodge, prec);
+    end if;
+  end for;
 end for;

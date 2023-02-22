@@ -317,12 +317,11 @@ function is_bad(P,data)
 
   if P`inf then // infinite point
     return true;
-  elif Valuation(eval_poly_Qp(r, x0, v)) gt 0 then // finite bad point
+  elif Valuation(Qp!eval_poly_Qp(r, x0, v)) gt 0 then // finite bad point
     return true;
   else
     return false;
   end if;
-  
 end function;
 
 
@@ -341,11 +340,11 @@ function is_very_bad(P,data)
   Kv, loc := Completion(K, v);
 
   if P`inf then // infinite point
-    if Valuation(x0) ge N then // infinite very bad point
+    if Valuation(Qp!x0) ge N then // infinite very bad point
       return true;
     end if;
   else // finite point
-    if Valuation(eval_poly_Qp(r, x0, v)) ge N then // finite very bad point
+    if Valuation(Qp!eval_poly_Qp(r, x0, v)) ge N then // finite very bad point
       return true;
     end if;
   end if;
@@ -672,8 +671,9 @@ function teichmueller_pt(P, data : N:=0)
 
   // Compute the Teichmueller point in the residue disk at a good point P
 
-  x0:=P`x; Q:=data`Q; v:=data`v; p:=data`p; W0:=data`W0; Winf:=data`Winf;
-  d:=Degree(Q); L:=Parent(x0); Ly:=PolynomialRing(L);
+  x0:=P`x; b:=P`b; Q:=data`Q; v:=data`v; p:=data`p; W0:=data`W0; Winf:=data`Winf; d:=Degree(Q);
+  L := IsEmpty(b) select Parent(x0) else Parent(b[1]);
+  Ly:=PolynomialRing(L);
 
   if is_bad(P,data) then
     error "Point is bad";
@@ -682,7 +682,6 @@ function teichmueller_pt(P, data : N:=0)
   if IsZero(N) then N := data`N; end if;
 
   x0new:=L!TeichmuellerLift(FiniteField(p)!x0,pAdicQuotientRing(p,N)); 
-  b:=P`b; 
   W0invx0 := Transpose(eval_ff_mat_Qp(W0^(-1), x0, v));
   ypowers:=Vector(b)*ChangeRing(W0invx0,Parent(b[1]));
   y0:=ypowers[2];
@@ -1043,23 +1042,19 @@ local_coord:=function(P,prec,data);
     ypowers:=Vector(b)*ChangeRing(W0invx0,Parent(b[1]));
     y0:=ypowers[2];
 
-    C:=Coefficients(Q);
-    D:=[];
-    for i:=1 to #C do
-      D[i]:=Evaluate(C[i],xt); 
-    end for;
-    fy:=Qpty!D;
-    derfy:=Derivative(fy);
+    fy := Qpty![eval_poly_Qp(Qi, xt, v) : Qi in Coefficients(Q)];
+    derfy := Derivative(fy);
 
     yt:=hensel_lift(fy,Qpt!y0);
 
+    Qpt_frac := FieldOfFractions(Qpt);
     ypowerst:=[];
-    ypowerst[1]:=FieldOfFractions(Qpt)!1;
-    ypowerst[2]:=yt;
+    ypowerst[1] := Qpt_frac!1;
+    ypowerst[2] := yt;
     for i:=3 to d do
-      ypowerst[i]:=ypowerst[i-1]*yt;
+      ypowerst[i] := ypowerst[i-1]*yt;
     end for;
-    bt:=Eltseq(Vector(ypowerst)*Transpose(Evaluate(W0,xt)));
+    bt:=Eltseq(Vector(ypowerst)*ChangeRing(Transpose(eval_ff_mat_Qp(W0, xt, v)), Qpt_frac));
 
     btnew:=[];
     for i:=1 to d do
@@ -1097,13 +1092,8 @@ local_coord:=function(P,prec,data);
           poly:=minpoly(FF!(1/Kt.1),bfun[i]);
         end if;
 
-        C:=Coefficients(poly);
-        D:=[];
-        for j:=1 to #C do
-          D[j]:=Evaluate(C[j],xt); 
-        end for;
-        fy:=Qpty!D;
-        derfy:=Derivative(fy);
+        fy := Qpty![eval_poly_Qp(c, xt, v) : c in Coefficients(poly)];
+        derfy := Derivative(fy);
 
         modpprec:=mod_p_prec(fy);
 
@@ -1128,13 +1118,8 @@ local_coord:=function(P,prec,data);
         poly:=minpoly(bfun[index],FF!1/(Kt.1));
       end if;
 
-      C:=Coefficients(poly);
-      D:=[];
-      for j:=1 to #C do
-        D[j]:=Evaluate(C[j],t+b[index]); 
-      end for;
-      fy:=Qpty!D;
-      derfy:=Derivative(fy);
+      fy := Qpty![eval_poly_Qp(c, t + b[index], v) : c in Coefficients(poly)];
+      derfy := Derivative(fy);
 
       modpprec:=mod_p_prec(fy);
 
@@ -1161,13 +1146,7 @@ local_coord:=function(P,prec,data);
             poly:=minpoly(bfun[index],bfun[i]);
           end if;
 
-          C:=Coefficients(poly);
-          D:=[];
-          for j:=1 to #C do
-            D[j]:=Evaluate(C[j],t+b[index]); 
-          end for;
-
-          fy:=Qpty!D;
+          fy := Qpty![eval_poly_Qp(c, t + b[index], v) : c in Coefficients(poly)];
           derfy:=Derivative(fy);
 
           modpprec:=mod_p_prec(fy);
@@ -1199,7 +1178,7 @@ local_coord:=function(P,prec,data);
     for i:=1 to d do
       bi:=FF!0;
       for j:=1 to d do
-        bi:=bi+W0[i,j]*FF.1^(j-1);
+        bi +:= W0[i,j]*FF.1^(j-1);
       end for;
       bfun[i]:=bi;
     end for;
@@ -1216,13 +1195,8 @@ local_coord:=function(P,prec,data);
           poly:=minpoly(FF!Kt.1,bfun[i]);
         end if;
 
-        C:=Coefficients(poly);
-        D:=[];
-        for j:=1 to #C do
-          D[j]:=Evaluate(C[j],xt); 
-        end for;
-        fy:=Qpty!D;
-        derfy:=Derivative(fy);
+        fy := Qpty![eval_poly_Qp(c, xt, v) : c in Coefficients(poly)];
+        derfy := Derivative(fy);
 
         modpprec:=mod_p_prec(fy);
 
@@ -1247,13 +1221,8 @@ local_coord:=function(P,prec,data);
         poly:=minpoly(bfun[index],FF!Kt.1);
       end if;
 
-      C:=Coefficients(poly);
-      D:=[];
-      for j:=1 to #C do
-        D[j]:=Evaluate(C[j],t+b[index]); 
-      end for;
-      fy:=Qpty!D;
-      derfy:=Derivative(fy);
+      fy := Qpty![eval_poly_Qp(c, t + b[index], v) : c in Coefficients(poly)];
+      derfy := Derivative(fy);
 
       modpprec:=mod_p_prec(fy);
 
@@ -1280,15 +1249,8 @@ local_coord:=function(P,prec,data);
             poly:=minpoly(bfun[index],bfun[i]);
           end if;
 
-          C:=Coefficients(poly);
-          D:=[];
-          for j:=1 to #C do
-            D[j]:=Evaluate(C[j],t+b[index]);
-          end for;
-
-          fy:=Qpty!D;
-
-          derfy:=Derivative(fy);
+          fy := Qpty![eval_poly_Qp(c, t + b[index], v) : c in Coefficients(poly)];
+          derfy := Derivative(fy);
 
           modpprec:=mod_p_prec(fy);
 

@@ -5,17 +5,17 @@ freeze;
 
 import "auxpolys.m": auxpolys, log;
 import "singleintegrals.m": evalf0, is_bad, local_coord, set_point, tadicprec, teichmueller_pt, xy_coordinates;
-import "misc.m": are_congruent, equivariant_splitting, eval_mat_R, eval_Q, FindQpointQp, fun_field, lindepQp, minprec, minval, minvalp;
+import "misc.m": are_congruent, equivariant_splitting, eval_mat_R, eval_Q, FindQpointQp, function_field, alg_approx_Qp, minprec, minval, minvalp;
 import "applications.m": Q_points, Qp_points, roots_with_prec, separate;
-import "heights.m": E1_tensor_E2, expand_algebraic_function, frob_equiv_iso, height, parallel_transport, parallel_transport_to_z;
+import "heights.m": E1_tensor_E2, expand_algebraic_function, frob_equiv_iso, height;
 
 
 // verbose flag determines how much information is printed during the computation.
 declare verbose QCMod, 4;
 
-intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
+intrinsic QCModAffine(Q::RngUPolElt[RngUPol], v::RngOrdIdl :
                       N := 15, prec := 2*N, basis0 := [], basis1 := [], basis2 := [], 
-                      number_of_correspondences := 0, base_point := 0, 
+                      number_of_correspondences := 0, base_point := 0, known_points := [],
                       hecke_prime := 0, unit_root_splitting := false, eqsplit := 0,
                       height_coeffs := [], rho := 0, use_log_basis := false, use_polys:=[])
   -> SeqEnum[FldRatElt], BoolElt, SeqEnum[FldRatElt], Rec, List, SeqEnum[Rec]
@@ -29,7 +29,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
 //    * rk(J/Q) = g(X) 
 //    * J has RM over Q
 //    These conditions are not checked!
-//  * p is a prime of good reduction, satisfying some additional Tuitman conditions (these
+//  * v is a split prime ideal of good reduction of K, satisfying some additional Tuitman conditions (these
 //    are checked).
 //
 //  OPIONAL PARAMETERS
@@ -45,6 +45,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
 //  * base_point is a pair [x,y] specifying a rational point on X to be used as a base
 //    point for Abel Jacobi. If base_point = 0, the first good affine rational point found
 //    is used.
+//  * known_points is a list of known rational points over the base field.
 //  * hecke_prime is a prime number q such that the Hecke operator Tq is used to construct
 //    nice correspondences and (if use_log_basis is false) a basis of the bilinear pairings.
 //    If hecke_prime is 0, we use q=p. We check p-adically whether Tq generates the
@@ -83,7 +84,8 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
   // ===                   CHECK INPUT                      ===
   // ==========================================================
   
-
+  p := Norm(v);
+  require IsPrime(p): "v must be a split prime of K.";
 
 
   // ==========================================================
@@ -95,7 +97,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
     prec +:= 1; 
   end while;
     
-  QQ := Rationals();
+  K := BaseRing(BaseRing(Q));
   Qp := pAdicField(p,N);
   r,Delta,s := auxpolys(Q);
 
@@ -104,7 +106,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
   // ==========================================================
 
   vprint QCMod, 2: " Computing a symplectic basis of H^1";
-  h1basis, g, r, W0 := H1Basis(Q, p);
+  h1basis, g, r, W0 := H1Basis(Q, v);
   if #basis0*#basis1 gt 0 then // Use the given basis
     h1basis := basis0 cat basis1;
   end if;
@@ -120,7 +122,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
   // h1basis is a basis of H^1 such that the first g elements span the regular
   // differentials. Construct a symplectic basis by changing the last g elements of h1basis.
   //
-  standard_sympl_mat := ZeroMatrix(Rationals(),2*g,2*g);
+  standard_sympl_mat := ZeroMatrix(K,2*g,2*g);
   for i in [1..g] do
     standard_sympl_mat[i,g+i] := 1; standard_sympl_mat[g+i,i] := -1;
   end for;
@@ -143,14 +145,14 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
     coefficients := SymplecticBasisH1(cpm); // Create coefficients of a symplectic basis in terms of h1basis
     new_complementary_basis := [&+[coefficients[i,j]*h1basis[j] : j in [1..2*g]] : i in [1..g]];
     sympl_basis := [h1basis[i] : i in [1..g]] cat new_complementary_basis;
-    if not &and[&and[Valuation(c, p) ge 0 : c in Coefficients(w[1])] : w in sympl_basis] then
+    if not &and[&and[Valuation(c, v) ge 0 : c in Coefficients(w[1])] : w in sympl_basis] then
       error "The computed symplectic basis is not integral. Please try a different prime or a different basis.";
     end if; 
     vprintf QCMod, 3: " Symplectic basis of H^1:\n%o\n", sympl_basis;
     basis0 := [[sympl_basis[i,j] : j in [1..Degree(Q)]] : i in [1..g]]; // basis of regular differentials
     basis1 := [[sympl_basis[i,j] : j in [1..Degree(Q)]] : i in [g+1..2*g]];  // basis of complementary subspace
   end if;
-  data := ColemanData(Q,p,N : useU:=true,  basis0 := basis0, basis1 := basis1, basis2 := basis2);
+  data := ColemanData(Q, v, N : useU:=true,  basis0:=basis0, basis1:=basis1, basis2:=basis2);
   vprintf QCMod, 2: " Computed Coleman data at p=%o to precision %o.\n", p, N;
 
   prec := Max(100, tadicprec(data, 1));
@@ -161,7 +163,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
   // ===                    POINTS                       ===
   // ==========================================================
   search_bound := 1000;
-  Qpoints  := Q_points(data,search_bound); // small Q-rational points
+  Qpoints := Q_points(data,search_bound : known_points := known_points); // small Q-rational points
   Nfactor := 1.5; // Additional precision for root finding in Qp_points
   computed_Qp_points := false;
   repeat 
@@ -173,13 +175,10 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
     end try;
   until computed_Qp_points;
 
-  Fp := FiniteField(p);
-
   // Affine points where Frobenius lift isn't defined:
   bad_Qppoints := [P : P in Qppoints | is_bad(P, data) and not P`inf];
   bad_Qpoints := [P : P in Qpoints | is_bad(P, data) and not P`inf];
-  bad_Qpindices := [i : i in [1..#Qppoints] | is_bad(Qppoints[i], data) 
-                                            and not Qppoints[i]`inf];
+  bad_Qpindices := [i : i in [1..#Qppoints] | is_bad(Qppoints[i], data) and not Qppoints[i]`inf];
 
   // Affine points where Frobenius lift is defined:
   good_Qpoints := [P : P in Qpoints | not is_bad(P, data) and not P`inf];
@@ -189,10 +188,10 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
   // Find xy-coordinates of the small affine rational points as rational numbers.
   // Use LLL for this.
   good_coordinates := [xy_coordinates(P,data) : P in good_Qpoints];
-  good_affine_rat_pts_xy := [[lindepQp(P[1]), lindepQp(P[2])] : P in good_coordinates]; 
+  good_affine_rat_pts_xy := [[alg_approx_Qp(P[1], v), alg_approx_Qp(P[2], v)] : P in good_coordinates]; 
   bad_coordinates := [xy_coordinates(P,data) : P in bad_Qpoints];
   // TODO: This might not always work for very bad points
-  bad_affine_rat_pts_xy := [[lindepQp(P[1]), lindepQp(P[2])] : P in bad_coordinates]; 
+  bad_affine_rat_pts_xy := [[alg_approx_Qp(P[1], v), alg_approx_Qp(P[2], v)] : P in bad_coordinates]; 
 
   vprintf QCMod, 2: "\n Good affine rational points:\n%o\n", good_affine_rat_pts_xy;
   vprintf QCMod, 2: "\n Bad affine rational points:\n%o\n", bad_affine_rat_pts_xy;
@@ -208,7 +207,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
   end if;
   local_base_point_index := FindQpointQp(bQ,Qppoints);       // Index of global base point in list of local points.
 
-  FF<y>   := fun_field(data);
+  FF<y>   := function_field(Q);
   x := BaseRing(FF).1;
   bpt   := CommonZeros([x-bQ_xy[1], y-bQ_xy[2]])[1]; // Base point as place on the function field
   vprintf QCMod, 2: "\n Using the base point %o.\n", bQ_xy;
@@ -339,7 +338,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
     hodge_prec := 5; 
     repeat
       try
-        eta,betafil,gammafil,hodge_loss := HodgeData(data,Z,bpt: prec := hodge_prec);
+        eta,betafil,gammafil,hodge_loss := HodgeData(Q,g,W0,data`basis,Z,bpt : r:=r, prec:=hodge_prec);
       catch e;
         hodge_prec +:= 5;
       end try;
@@ -360,10 +359,10 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
     // ==========================================================
     // ===                  FROBENIUS                      ===
     // ==========================================================
-     
-    b0 := teichmueller_pt(bQ,data); 
+
+    b0 := teichmueller_pt(bQ,data);
     vprintf QCMod: " Computing Frobenius structure for correspondence %o.\n", l;
-    b0pt := [QQ!c : c in xy_coordinates(b0, data)]; // xy-coordinates of P
+    b0pt := [RationalField()!c : c in xy_coordinates(b0, data)]; // xy-coordinates of P
     G, NG := FrobeniusStructure(data,Z,eta,b0pt : N:=Nhodge); 
     G_list := [**]; // evaluations of G at Teichmuellers of all good points (0 if bad)
     for i := 1 to numberofpoints do
@@ -372,12 +371,12 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
       else
         P  := teichpoints[i]; // P is the Teichmueller point in this disk
         pt := [IntegerRing()!c : c in xy_coordinates(P, data)]; // xy-coordinates of P
-        G_list[i] := eval_mat_R(G,pt,r); // P is finite good, so no precision loss. 
+        G_list[i] := eval_mat_R(G, pt, r, v); // P is finite good, so no precision loss. 
       end if;
     end for;
     Ncurrent := Min(Nhodge, NG);
 
-    PhiAZb_to_b0, Nptb0 := parallel_transport(bQ,b0,Z,eta,data:prec:=prec,N:=Nhodge);
+    PhiAZb_to_b0, Nptb0 := ParallelTransport(bQ,b0,Z,eta,data:prec:=prec,N:=Nhodge);
     for i := 1 to 2*g do
       PhiAZb_to_b0[2*g+2,i+1] := -PhiAZb_to_b0[2*g+2,i+1];
     end for;
@@ -392,7 +391,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
       if G_list[i] eq 0 then
         PhiAZb[i] := 0;
       else 
-        pti, Npti := parallel_transport(teichpoints[i],Qppoints[i],Z,eta,data:prec:=prec,N:=Nhodge);
+        pti, Npti := ParallelTransport(teichpoints[i],Qppoints[i],Z,eta,data:prec:=prec,N:=Nhodge);
         isoi, Nisoi := frob_equiv_iso(G_list[i],data,Ncurrent);
         MNi := Npti lt Nisoi select Parent(pti) else Parent(isoi);
         PhiAZb[i] := MNi!(pti*PhiAZb_to_b0*isoi);
@@ -401,12 +400,12 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
       end if;
     end for;
     Ncurrent := Nfrob_equiv_iso;
-    Append(~c1s, Min(minvalPhiAZbs)); 
+    Append(~c1s, Min(minvalPhiAZbs));
 
     PhiAZb_to_z := [**]; // Frobenius on the phi-modules A_Z(b,z) for z in residue disk of P (0 if P bad)
     for i := 1 to numberofpoints do
       PhiAZb_to_z[i] := G_list[i] eq 0 select 0 else
-        parallel_transport_to_z(Qppoints[i],Z,eta,data:prec:=prec,N:=Nhodge)*PhiAZb[i]; 
+        ParallelTransportToZ(Qppoints[i],Z,eta,data:prec:=prec,N:=Nhodge)*PhiAZb[i]; 
     end for;
 
     gammafil_listb_to_z := [* 0 : k in [1..numberofpoints] *]; // evaluations of gammafil at local coordinates for all points 
@@ -432,7 +431,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
         for i := 1 to #good_affine_rat_pts_xy_no_bpt do
           Qpti := i lt global_base_point_index select good_Qpoints[i]
                               else good_Qpoints[i+1];
-          pti, Npti := parallel_transport(Qppoints[ks[i]], Qpti, Z,eta,data:prec:=prec,N:=Nhodge);
+          pti, Npti := ParallelTransport(Qppoints[ks[i]], Qpti, Z,eta,data:prec:=prec,N:=Nhodge);
           
           MNi := Npti lt Precision(BaseRing(PhiAZb[ks[i]])) select Parent(pti) else Parent(PhiAZb[ks[i]]);
           PhiP := MNi!(pti*PhiAZb[ks[i]]);
@@ -473,7 +472,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
           Qpti := i lt global_base_point_index select good_Qpoints[i]
                       else good_Qpoints[i+1];
 
-          pti, Npti := parallel_transport(Qppoints[ks[i]], Qpti, Z,eta,data:prec:=prec,N:=Nhodge);
+          pti, Npti := ParallelTransport(Qppoints[ks[i]], Qpti, Z,eta,data:prec:=prec,N:=Nhodge);
           MNi := Npti lt Precision(BaseRing(PhiAZb[ks[i]])) select Parent(pti) else Parent(PhiAZb[ks[i]]);
           PhiP := MNi!(pti*PhiAZb[ks[i]]);
           E1Pi := Vector(BaseRing(PhiP),g,[PhiP[j+1,1] : j in [1..g]]);
@@ -579,7 +578,7 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
     vprintf QCMod, 3: " Power series expansions of the quadratic Chabauty functions at correspondence %o in all good affine disks, capped at precision %o\n", k, 3;
     for i := 1 to #F_list do
       if F_list[i] ne 0 then 
-        vprintf QCMod, 3: " disk %o\n expansion: %o \n\n", [Fp!(Qppoints[i]`x), Fp!(Qppoints[i]`b[2])], ChangePrecision(F_list[i], 3);
+        vprintf QCMod, 3: " disk %o\n expansion: %o \n\n", [GF(p)!(Qppoints[i]`x), GF(p)!(Qppoints[i]`b[2])], ChangePrecision(F_list[i], 3);
       end if;
     end for;
 
@@ -798,19 +797,19 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
   sols := &cat[L : L in solutions | #L gt 0];
   vprintf QCMod: "\n The common roots of the quadratic Chabauty function(s) in this affine patch are \n %o \n\n", [t[1] : t in sols];
   vprintf QCMod, 2: " The lists of zeroes are \n %o \n", zeroes_lists;
-  K := pAdicField(p, min_root_prec);
+  Qp := pAdicField(p, min_root_prec);
   fake_rat_pts := [* *]; 
   recovered_rat_pts_count := 0;
   number_of_known_rat_pts := #good_affine_rat_pts_xy;
   for i := 1 to #sols do
-//    P := [lindepQp(sols[i,1]), lindepQp(sols[i,2])];
+//    P := [alg_approx_Qp(sols[i,1], v), alg_approx_Qp(sols[i,2], v)];
     known_rational := false;
     sol := sols[i,1];
     multiple := sols[i,2];
     for pt in good_affine_rat_pts_xy do
       // Check if sols is congruent to a known rational point
       if are_congruent(sols[i,1], pt) then
-      //if IsZero(K!sols[i,1] - K!pt[1]) and IsZero (K!sols[i,2] - K!pt[2]) then
+      //if IsZero(Qp!sols[i,1] - Qp!pt[1]) and IsZero (Qp!sols[i,2] - Qp!pt[2]) then
         vprintf QCMod, 2: " Recovered known rational point %o\n", pt;
         if multiple then 
           error "Multiple root at rational point. Try increasing p-adic precision (parameter N).";
@@ -821,9 +820,9 @@ intrinsic QCModAffine(Q::RngUPolElt[RngUPol], p::RngIntElt :
       end if;
     end for;
     if not known_rational then
-      P := [lindepQp(K!sols[i,1,1]), lindepQp(K!sols[i,1,2])];
+      P := [alg_approx_Qp(Qp!sols[i,1,1], v), alg_approx_Qp(Qp!sols[i,1,2], v)];
       //vprintf QCMod: "Rational reconstruction of point %o is \%o ", i, P;
-      if IsZero(eval_Q(Q, P[1], P[2])) then
+      if IsZero(eval_Q(Q, P[1], P[2], v)) then
         vprintf QCMod, 2: " Found unknown rational point P\n%o\n", P;
         if multiple then 
           error "Multiple root at rational point. Try increasing p-adic precision (parameter N).";
@@ -867,7 +866,7 @@ intrinsic QCModQuartic(Q::RngUPolElt[RngUPol], S::ModSym :
   -> BoolElt, SeqEnum[Pt], RngIntElt, RngUPolElt[RngUPol]
   {Takes an integer polynomial defining an affine patch of a smooth plane quartic and outputs the rational points.}
   // S is a space of cusp forms
-  // Q is a polynomial in (QQ[x])[y] of total degree 4
+  // Q is a polynomial in (K[x])[y] of total degree 4
   require LeadingCoefficient(Q) eq 1: "Need a monic model in y"; 
   // TODO: 
   // - Automatically compute a Tuitman model that contains enough rational points 
