@@ -1,5 +1,5 @@
 test_format := recformat<Q, level, p, N, prec, r, Delta, s, h1basis, g, rho, W0, cpm_prec, cpm,
-  sympl_coeffs, basis0, basis1, basis2, tadicprec, Qpoints, Qppoints, bad_Qppoints, good_Qpoints,
+  sympl_coeffs, basis0, basis1, basis2, tadicprec, Qpoints, Qppproints, bad_Qppoints, good_Qpoints,
   good_affine_rat_pts_xy, bad_affine_rat_pts_xy, bQ, bpt, ks, teichpoints, q, corresp, Tq,
   corr_loss, eqsplit, hodge_prec, eta, betafil, gammafil, hodge_loss, Nhodge, b0pt, NG, G_list,
   PhiAZb_to_b0, PhiAZb, PhiAZb_to_z, gammafil_listb_to_z, ptrans_P1, ptrans_P2, ptrans_out,
@@ -16,7 +16,64 @@ end function;
 
 test_NF := rec<test_format |
   tadicprec := 100,
-  bQ := rec<recformat<x, b, inf, xt, bt, index> | 
+  
+  r := Polynomial([CyclotomicField(3) | [ RationalField() | 15, 3 ], [ RationalField() | -72, 18 ], [ RationalField() | 1773, 1926 ], [ RationalField() | -1086, -498 ], [ RationalField() | -3105, -3780 ], [ RationalField() | 12420, -108 ], [ RationalField() | 7731, 19026 ], [ RationalField() | -20466, -3510 ], [ RationalField() | -1890, -21438 ], [ RationalField() | 16140, 16080 ], [ RationalField() | -10296, -2691 ], [ RationalField() | 1224, -2736 ], [ RationalField() | 528, 624 ]]),
+
+  Qpoints := [*
+rec<recformat<x, b, inf, xt, bt, index> | 
+x := O(13^20),
+b := [ pAdicField(13, 15) | 1 + O(13^15), -24477097170159995 + O(13^15), 24477097170159994 + O(13^15), 1 + O(13^15) ],
+inf := false>,
+rec<recformat<x, b, inf, xt, bt, index> | 
+x := 1 + O(13^20),
+b := [ pAdicField(13, 15) | 1 + O(13^15), -24477097170159995 + O(13^15), 24477097170159994 + O(13^15), 1 + O(13^15) ],
+inf := false>,
+rec<recformat<x, b, inf, xt, bt, index> | 
+x := 4404826500424750253630 + O(13^20),
+b := [ pAdicField(13, 15) | 1 + O(13^15), -24477097170159995 + O(13^15), 24477097170159994 + O(13^15), 1 + O(13^15) ],
+inf := false>,
+rec<recformat<x, b, inf, xt, bt, index> | 
+x := O(13^20),
+b := [ pAdicField(13, 15) | 1 + O(13^15), -24477097170159994 + O(13^15), -24477097170159995 + O(13^15), -1 + O(13^15) ],
+inf := false>,
+rec<recformat<x, b, inf, xt, bt, index> | 
+x := 4404826500424750253630 + O(13^20),
+b := [ pAdicField(13, 15) | 1 + O(13^15), O(13^20), O(13^40), O(13^60) ],
+inf := false>,
+rec<recformat<x, b, inf, xt, bt, index> | 
+x := 8809653000849500507260 + O(13^20),
+b := [ pAdicField(13, 15) | 1 + O(13^15), 24477097170159994 + O(13^15), -24477097170159995 + O(13^15), 1 + O(13^15) ],
+inf := false>,
+rec<recformat<x, b, inf, xt, bt, index> | 
+x := 4404826500424750253629 + O(13^20),
+b := [ pAdicField(13, 15) | 1 + O(13^15), 1 + O(13^15), 1 + O(13^15), 1 + O(13^15) ],
+inf := false>,
+rec<recformat<x, b, inf, xt, bt, index> | 
+x := 2202413250212375126813 + O(13^20),
+b := [ pAdicField(13, 15) | 1 + O(13^15), 12238548585079998 + O(13^15), 5561349624097307 + O(13^15), -836887002664038 + O(13^15) ],
+inf := false>,
+rec<recformat<x, b, inf, xt, bt, index> | 
+x := -1468275500141583417877 + O(13^20),
+b := [ pAdicField(13, 15) | 1 + O(13^15), 8159032390053332 + O(13^15), 25220996728083584 + O(13^15), 5439354926702221 + O(13^15) ],
+inf := false>,
+rec<recformat<x, b, inf, xt, bt, index> | 
+x := -7300068637228024592586 + O(13^20),
+b := [ pAdicField(13, 15) | 1 + O(13^15), 25592946507045378 + O(13^15), -12796473253522689 + O(13^15), -19194709880284034 + O(13^15) ],
+inf := false>,
+rec<recformat<x, b, inf, xt, bt, index> | 
+x := 5861299468143507243850 + O(13^20),
+b := [ pAdicField(13, 15) | 1 + O(13^15), -1 + O(13^15), 1 + O(13^15), -1 + O(13^15) ],
+inf := false>,
+rec<recformat<x, b, inf, xt, bt, index> | 
+x := O(13^23),
+b := [ pAdicField(13, 15) | 1 + O(13^15), O(13^23), O(13^23), O(13^23) ],
+inf := true>,
+rec<recformat<x, b, inf, xt, bt, index> | 
+x := O(13^23),
+b := [ pAdicField(13, 15) | 1 + O(13^15), 24477097170159995 + O(13^15), 24477097170159994 + O(13^15), -1 + O(13^15) ],
+inf := true>
+*], 
+    bQ := rec<recformat<x, b, inf, xt, bt, index> | 
     x := -12238548585079997 + O(13^15),
     b := [ pAdicField(13, 15) | 1 + O(13^15), 25592946507045378 + O(13^15), -12796473253522689 + O(13^15), -19194709880284034 + O(13^15) ],
     inf := false>,

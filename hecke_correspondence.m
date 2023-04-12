@@ -80,8 +80,8 @@ intrinsic HeckeCorrespondenceQC(data::Rec, q::RngIntElt, N::RngIntElt :
       Zmx *:= D;
       for j in [1..2*g] do
         for k in [1..2*g] do
-          AQ[j,k] := lindepQp(pAdicField(q, N-1)!A[j,k]);    // recognition of integer in Zp via LLL
-          ZQ[j,k] := lindepQp(pAdicField(q, N-1)!Zmx[j,k]);  // dito
+          AK[j,k] := lindepQp(pAdicField(q, N-1)!A[j,k]);    // recognition of integer in Zp via LLL
+          ZK[j,k] := lindepQp(pAdicField(q, N-1)!Zmx[j,k]);  // dito
         end for;
       end for;
       if Trace(ZQ*C) ne 0 then // approximation issue. Perturbe ZQ slightly.

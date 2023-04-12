@@ -632,3 +632,729 @@ done with the Mordell-Weil sieve? true
 For sieving used the prime(s) [ 199, 373, 463 ]
 
 Total time: 62.519 seconds, Total memory usage: 136.59MB
+
+In file "qc_C161.m", line 5, column 1:
+>> load "coleman.m";
+   ^
+User error: Could not open file "coleman.m" (No such file or directory)
+
+In file "qc_C161.m", line 6, column 1:
+>> load "symplectic_basis.m";
+   ^
+User error: Could not open file "symplectic_basis.m" (No such file or directory)
+
+In file "qc_C161.m", line 7, column 1:
+>> load "hecke_correspondence.m";
+   ^
+User error: Could not open file "hecke_correspondence.m" (No such file or directory)
+
+In file "qc_C161.m", line 8, column 1:
+>> load "hodge.m";
+   ^
+User error: Could not open file "hodge.m" (No such file or directory)
+
+In file "qc_C161.m", line 9, column 1:
+>> load "frobenius.m";
+   ^
+User error: Could not open file "frobenius.m" (No such file or directory)
+
+In file "qc_C161.m", line 10, column 1:
+>> load "heights.m";
+   ^
+User error: Could not open file "heights.m" (No such file or directory)
+
+In file "qc_C161.m", line 11, column 1:
+>> load "qc_init_g2.m";
+   ^
+User error: Could not open file "qc_init_g2.m" (No such file or directory)
+
+In file "qc_C161.m", line 24, column 4:
+>> Q:=y^2 -( x^6+2*x^4+6*x^3+17*x^2+18*x+5 );
+      ^
+User error: Identifier 'y' has not been declared or assigned
+
+In file "qc_C161.m", line 26, column 63:
+>> "Compute the rational points of the curve with affine model ",Q;
+                                                                 ^
+User error: Identifier 'Q' has not been declared or assigned
+
+In file "qc_C161.m", line 29, column 23:
+>> r,Delta,s := auxpolys(Q);
+                         ^
+User error: Identifier 'Q' has not been declared or assigned
+ Computing a symplectic basis of H^1
+
+In file "qc_C161.m", line 38, column 33:
+>>   h1basis, g, r, W0 := h1_basis(Q,p,N);  
+                                   ^
+User error: Identifier 'Q' has not been declared or assigned
+
+In file "qc_C161.m", line 42, column 44:
+>>   if pl gt 1 then printf " genus = %o.\n", g; end if;
+                                              ^
+User error: Identifier 'g' has not been declared or assigned
+
+In file "qc_C161.m", line 44, column 12:
+>>     rho := g;       //If not given, we assume that the Picard number is equal to the genus
+              ^
+User error: Identifier 'g' has not been declared or assigned
+
+In file "qc_C161.m", line 51, column 50:
+>>   standard_sympl_mat := ZeroMatrix(Rationals(),2*g,2*g);
+                                                    ^
+User error: Identifier 'g' has not been declared or assigned
+
+In file "qc_C161.m", line 52, column 16:
+>>   for i in [1..g] do
+                  ^
+User error: Identifier 'g' has not been declared or assigned
+
+In file "qc_C161.m", line 57, column 17:
+>>   cpm_prec := 2*g;
+                   ^
+User error: Identifier 'g' has not been declared or assigned
+
+In file "qc_C161.m", line 62, column 46:
+>>       cpm := cup_product_matrix_split_places(h1basis, Q, g, r, W0 : prec := cpm_prec);
+                                                ^
+User error: Identifier 'h1basis' has not been declared or assigned
+
+In file "qc_C161.m", line 68, column 48:
+>>   if pl gt 2 then print " Cup product matrix", cpm; end if;
+                                                  ^
+User error: Identifier 'cpm' has not been declared or assigned
+
+In file "qc_C161.m", line 69, column 6:
+>>   if cpm ne standard_sympl_mat then 
+        ^
+User error: Identifier 'cpm' has not been declared or assigned
+
+In file "qc_C161.m", line 80, column 24:
+>>   data := coleman_data(Q,p,N : useU:=true,  basis0 := basis0, basis1 := basis1, basis2 := basis2);
+                          ^
+User error: Identifier 'Q' has not been declared or assigned
+
+In file "qc_C161.m", line 81, column 26:
+>> data_hol := coleman_data(Q,p,5:useU:=false,basis0:=basis0,basis1:=basis1,basis2:=basis2);
+                            ^
+User error: Identifier 'Q' has not been declared or assigned
+Computed Coleman data at p=29.
+
+In file "qc_C161.m", line 84, column 30:
+>>   prec := Max(100, tadicprec(data, 1));
+                                ^
+User error: Identifier 'data' has not been declared or assigned
+
+In file "qc_C161.m", line 91, column 24:
+>>   Qpoints  := Q_points(data,search_bound); // small Q-rational points
+                          ^
+User error: Identifier 'data' has not been declared or assigned
+
+In file "qc_C161.m", line 96, column 29:
+>>       Qppoints := Qp_points(data : Nfactor := Nfactor); // One Q_p-point for every residue disk.
+                               ^
+User error: Identifier 'data' has not been declared or assigned
+
+In file "qc_C161.m", line 106, column 29:
+>>   bad_Qppoints := [P : P in Qppoints | is_bad(P, data) and not P`inf];
+                               ^
+User error: Identifier 'Qppoints' has not been declared or assigned
+
+In file "qc_C161.m", line 107, column 28:
+>>   bad_Qpoints := [P : P in Qpoints | is_bad(P, data) and not P`inf];
+                              ^
+User error: Identifier 'Qpoints' has not been declared or assigned
+
+In file "qc_C161.m", line 108, column 35:
+>>   bad_Qpindices := [i : i in [1..#Qppoints] | is_bad(Qppoints[i], data) 
+                                     ^
+User error: Identifier 'Qppoints' has not been declared or assigned
+
+In file "qc_C161.m", line 112, column 29:
+>>   good_Qpoints := [P : P in Qpoints | not is_bad(P, data) and not P`inf];
+                               ^
+User error: Identifier 'Qpoints' has not been declared or assigned
+
+In file "qc_C161.m", line 113, column 57:
+>>   good_Q_Qp_indices := [FindQpointQp(P,Qppoints) : P in good_Qpoints];
+                                                           ^
+User error: Identifier 'good_Qpoints' has not been declared or assigned
+
+In file "qc_C161.m", line 114, column 22:
+>>   numberofpoints := #Qppoints;
+                        ^
+User error: Identifier 'Qppoints' has not been declared or assigned
+
+In file "qc_C161.m", line 118, column 54:
+>>   good_coordinates := [xy_coordinates(P,data) : P in good_Qpoints];
+                                                        ^
+User error: Identifier 'good_Qpoints' has not been declared or assigned
+
+In file "qc_C161.m", line 119, column 70:
+>>   good_affine_rat_pts_xy := [[lindepQp(P[1]), lindepQp(P[2])] : P in good_coordinates]; 
+                                                                        ^
+User error: Identifier 'good_coordinates' has not been declared or assigned
+
+In file "qc_C161.m", line 120, column 53:
+>>   bad_coordinates := [xy_coordinates(P,data) : P in bad_Qpoints];
+                                                       ^
+User error: Identifier 'bad_Qpoints' has not been declared or assigned
+
+In file "qc_C161.m", line 122, column 69:
+>>   bad_affine_rat_pts_xy := [[lindepQp(P[1]), lindepQp(P[2])] : P in bad_coordinates]; 
+                                                                       ^
+User error: Identifier 'bad_coordinates' has not been declared or assigned
+
+In file "qc_C161.m", line 125, column 46:
+>>     print "\n Good affine rational points:", good_affine_rat_pts_xy;  
+                                                ^
+User error: Identifier 'good_affine_rat_pts_xy' has not been declared or assigned
+
+In file "qc_C161.m", line 131, column 11:
+>>     bQ := good_Qpoints[global_base_point_index]; // base point as Qpoint
+             ^
+User error: Identifier 'good_Qpoints' has not been declared or assigned
+
+In file "qc_C161.m", line 138, column 42:
+>>   local_base_point_index := FindQpointQp(bQ,Qppoints);       // Index of global base point in list of local points.
+                                            ^
+User error: Identifier 'bQ' has not been declared or assigned
+
+In file "qc_C161.m", line 140, column 21:
+>>   FF   := fun_field(data);
+                       ^
+User error: Identifier 'data' has not been declared or assigned
+
+In file "qc_C161.m", line 141, column 23:
+>> bpt   := CommonZeros([FF!x-bQ_xy[1], FF.1-bQ_xy[2]])[1]; // Base point as place on the function field
+                         ^
+User error: Identifier 'FF' has not been declared or assigned
+
+In file "qc_C161.m", line 142, column 57:
+>> if pl gt 0 then printf "\n Using the base point %o.\n", bQ_xy; end if;
+                                                           ^
+User error: Identifier 'bQ_xy' has not been declared or assigned
+
+In file "qc_C161.m", line 143, column 41:
+>> good_affine_rat_pts_xy_no_bpt := Remove(good_affine_rat_pts_xy, global_base_point_index); 
+                                           ^
+User error: Identifier 'good_affine_rat_pts_xy' has not been declared or assigned
+
+In file "qc_C161.m", line 145, column 15:
+>> ks := Exclude(good_Q_Qp_indices, local_base_point_index);  // indices in Qppoints of good affine 
+                 ^
+User error: Identifier 'good_Q_Qp_indices' has not been declared or assigned
+
+In file "qc_C161.m", line 149, column 15:
+>> for i := 1 to numberofpoints do
+                 ^
+User error: Identifier 'numberofpoints' has not been declared or assigned
+
+ Computing correspondences
+In file "qc_C161.m", line 162, column 48:
+>>   correspondences, Tq, corr_loss := hecke_corr(data,q,N : basis0:=basis0,basis1:=basis1,printlevel:=pl);
+                                                  ^
+User error: Identifier 'data' has not been declared or assigned
+
+In file "qc_C161.m", line 164, column 20:
+>>   Ncorr := N + Min(corr_loss, 0);
+                      ^
+User error: Identifier 'corr_loss' has not been declared or assigned
+
+In file "qc_C161.m", line 168, column 27:
+>>   Qpcorr := pAdicField(p, Ncorr);
+                             ^
+User error: Identifier 'Ncorr' has not been declared or assigned
+
+In file "qc_C161.m", line 169, column 29:
+>>   mat_space := KMatrixSpace(Qpcorr, 2*g, 2*g);
+                               ^
+User error: Identifier 'Qpcorr' has not been declared or assigned
+
+In file "qc_C161.m", line 170, column 76:
+>>   if pl gt 1 then printf "\nHecke operator at %o acting on H^1:\n%o\n", q, Tq; end if;
+                                                                              ^
+User error: Identifier 'Tq' has not been declared or assigned
+
+In file "qc_C161.m", line 171, column 17:
+>>   if IsDiagonal(Tq) or Degree(CharacteristicPolynomial(Tq)) lt 2*g then
+                   ^
+User error: Identifier 'Tq' has not been declared or assigned
+
+In file "qc_C161.m", line 179, column 20:
+>>   if Dimension(sub<mat_space | ChangeUniverse(correspondences, mat_space)>) lt rho-1 then
+                      ^
+User error: Identifier 'mat_space' has not been declared or assigned
+
+In file "qc_C161.m", line 185, column 62:
+>>   if pl gt 1 then printf "\n Nice correspondences:\n%o\n\n", correspondences; end if;
+                                                                ^
+User error: Identifier 'correspondences' has not been declared or assigned
+
+In file "qc_C161.m", line 187, column 28:
+>>   Tq_small := ExtractBlock(Tq,1,1,g,g);                // Hecke operator at q on H^0(X,Omega^1)
+                              ^
+User error: Identifier 'Tq' has not been declared or assigned
+
+In file "qc_C161.m", line 188, column 44:
+>>   char_poly_Tq := CharacteristicPolynomial(Tq_small);  
+                                              ^
+User error: Identifier 'Tq_small' has not been declared or assigned
+
+In file "qc_C161.m", line 189, column 38:
+>>   Qp_ext := quo<PolynomialRing(Qp) | char_poly_Tq>;
+                                        ^
+User error: Identifier 'char_poly_Tq' has not been declared or assigned
+
+In file "qc_C161.m", line 190, column 37:
+>>   Salpha := quo<PolynomialRing(S) | char_poly_Tq>;
+                                       ^
+User error: Identifier 'char_poly_Tq' has not been declared or assigned
+
+In file "qc_C161.m", line 193, column 23:
+>>   eqsplit := eq_split(Tq);
+                         ^
+User error: Identifier 'Tq' has not been declared or assigned
+
+In file "qc_C161.m", line 197, column 33:
+>>   big_split := BlockMatrix(1,2,[eqsplit,ZeroMatrix(Rationals(),2*g,g)]);
+                                   ^
+User error: Identifier 'eqsplit' has not been declared or assigned
+
+In file "qc_C161.m", line 198, column 30:
+>>   check_equiv := ChangeRing((big_split*Transpose(Tq) - Transpose(Tq)*big_split), pAdicField(p, N-2));     
+                                ^
+User error: Identifier 'big_split' has not been declared or assigned
+
+In file "qc_C161.m", line 199, column 92:
+>>   min_val_check_equiv := Min([Min([Valuation(check_equiv[i,j]) : j in [1..g]]): i in [1..2*g]]);
+                                                                                              ^
+User error: Identifier 'g' has not been declared or assigned
+
+In file "qc_C161.m", line 200, column 10:
+>>   assert min_val_check_equiv ge N-3; 
+            ^
+User error: Identifier 'min_val_check_equiv' has not been declared or assigned
+
+In file "qc_C161.m", line 202, column 61:
+>>   if pl gt 1 then printf "\n equivariant splitting:\n%o\n", eqsplit; end if;
+                                                               ^
+User error: Identifier 'eqsplit' has not been declared or assigned
+
+In file "qc_C161.m", line 203, column 28:
+>>   minvaleqsplit := minvalp(eqsplit, p);
+                              ^
+User error: Identifier 'eqsplit' has not been declared or assigned
+
+In file "qc_C161.m", line 206, column 14:
+>>   NE1E2Ps := Ncorr;  // Precision of E1 tensor E2 of auxiliary points
+                ^
+User error: Identifier 'Ncorr' has not been declared or assigned
+
+In file "qc_C161.m", line 207, column 11:
+>>   Nhts := Ncorr; // Precision of local heights of auxiliary points
+             ^
+User error: Identifier 'Ncorr' has not been declared or assigned
+
+In file "qc_C161.m", line 211, column 34:
+>>   super_space := VectorSpace(Qp, g+1);
+                                    ^
+User error: Identifier 'g' has not been declared or assigned
+
+In file "qc_C161.m", line 212, column 25:
+>>   E1_E2_subspace := sub<super_space | [Zero(super_space)]>;
+                           ^
+User error: Identifier 'super_space' has not been declared or assigned
+
+In file "qc_C161.m", line 217, column 6:
+>> Z := correspondences[1];
+        ^
+User error: Identifier 'correspondences' has not been declared or assigned
+ Computing Hodge filtration
+
+In file "qc_C161.m", line 228, column 51:
+>>     eta,betafil,gammafil,hodge_loss := hodge_data(data,Z,bpt: prec := hodge_prec);
+                                                     ^
+User error: Identifier 'data' has not been declared or assigned
+
+In file "qc_C161.m", line 234, column 11:
+>> Nhodge := Ncorr + Min(0, hodge_loss);
+             ^
+User error: Identifier 'Ncorr' has not been declared or assigned
+
+In file "qc_C161.m", line 237, column 28:
+>>   printf  " eta =  %o.\n", eta; 
+                              ^
+User error: Identifier 'eta' has not been declared or assigned
+
+In file "qc_C161.m", line 243, column 23:
+>> valbetafil := minvalp(betafil, p);
+                         ^
+User error: Identifier 'betafil' has not been declared or assigned
+
+In file "qc_C161.m", line 244, column 48:
+>> maxdeggammafil := Max([Degree(a) : a in Eltseq(gammafil)]);
+                                                  ^
+User error: Identifier 'gammafil' has not been declared or assigned
+
+In file "qc_C161.m", line 246, column 78:
+>>     Min([Min([0] cat [Valuation(c, p) : c in Coefficients(a)]) : a in Eltseq(gammafil)]);
+                                                                                ^
+User error: Identifier 'gammafil' has not been declared or assigned
+
+In file "qc_C161.m", line 252, column 23:
+>> b0 := teichmueller_pt(bQ,data); 
+                         ^
+User error: Identifier 'bQ' has not been declared or assigned
+ Computing Frobenius structure.
+
+In file "qc_C161.m", line 254, column 37:
+>> b0pt := [QQ!c : c in xy_coordinates(b0, data)]; // xy-coordinates of P
+                                       ^
+User error: Identifier 'b0' has not been declared or assigned
+
+In file "qc_C161.m", line 256, column 21:
+>> G, NG := frob_struc(data,Z,eta,b0pt : N:=Nhodge); 
+                       ^
+User error: Identifier 'data' has not been declared or assigned
+
+In file "qc_C161.m", line 258, column 15:
+>> for i := 1 to numberofpoints do
+                 ^
+User error: Identifier 'numberofpoints' has not been declared or assigned
+
+In file "qc_C161.m", line 267, column 17:
+>> Ncurrent := Min(Nhodge, NG);
+                   ^
+User error: Identifier 'Nhodge' has not been declared or assigned
+
+In file "qc_C161.m", line 270, column 43:
+>> PhiAZb_to_b0, Nptb0 := parallel_transport(bQ,b0,Z,eta,data:prec:=prec,N:=Nhodge);
+                                             ^
+User error: Identifier 'bQ' has not been declared or assigned
+
+In file "qc_C161.m", line 271, column 17:
+>> for i := 1 to 2*g do
+                   ^
+User error: Identifier 'g' has not been declared or assigned
+
+In file "qc_C161.m", line 277, column 17:
+>> Ncurrent := Min(Ncurrent, Nptb0);
+                   ^
+User error: Identifier 'Ncurrent' has not been declared or assigned
+
+In file "qc_C161.m", line 278, column 20:
+>> Nfrob_equiv_iso := Ncurrent;
+                      ^
+User error: Identifier 'Ncurrent' has not been declared or assigned
+
+In file "qc_C161.m", line 279, column 32:
+>> minvalPhiAZbs := [0 : i in [1..numberofpoints]];
+                                  ^
+User error: Identifier 'numberofpoints' has not been declared or assigned
+
+In file "qc_C161.m", line 280, column 15:
+>> for i := 1 to numberofpoints do
+                 ^
+User error: Identifier 'numberofpoints' has not been declared or assigned
+
+In file "qc_C161.m", line 293, column 13:
+>> Ncurrent := Nfrob_equiv_iso;
+               ^
+User error: Identifier 'Nfrob_equiv_iso' has not been declared or assigned
+
+In file "qc_C161.m", line 294, column 11:
+>> c1 := Min(minvalPhiAZbs); 
+             ^
+User error: Identifier 'minvalPhiAZbs' has not been declared or assigned
+
+In file "qc_C161.m", line 297, column 15:
+>> for i := 1 to numberofpoints do
+                 ^
+User error: Identifier 'numberofpoints' has not been declared or assigned
+
+In file "qc_C161.m", line 303, column 40:
+>> gammafil_listb_to_z := [* 0 : k in [1..numberofpoints] *]; // evaluations of gammafil at local coordinates for all points 
+                                          ^
+User error: Identifier 'numberofpoints' has not been declared or assigned
+
+In file "qc_C161.m", line 305, column 15:
+>> for i := 1 to numberofpoints do
+                 ^
+User error: Identifier 'numberofpoints' has not been declared or assigned
+
+In file "qc_C161.m", line 338, column 18:
+>> min_val_det_i := Ncurrent;
+                    ^
+User error: Identifier 'Ncurrent' has not been declared or assigned
+
+In file "qc_C161.m", line 339, column 16:
+>> for i := 1 to #good_affine_rat_pts_xy_no_bpt do
+                  ^
+User error: Identifier 'good_affine_rat_pts_xy_no_bpt' has not been declared or assigned
+
+In file "qc_C161.m", line 363, column 4:
+>> if min_val_det_i ge Ncurrent then  // precision loss too high to obtain meaningful result.
+      ^
+User error: Identifier 'min_val_det_i' has not been declared or assigned
+
+In file "qc_C161.m", line 366, column 21:
+>> changebasis:=Matrix(basisH0star)^(-1);
+                       ^
+User error: Identifier 'basisH0star' has not been declared or assigned
+
+In file "qc_C161.m", line 367, column 29:
+>> minvalchangebasis := minval(changebasis);
+                               ^
+User error: Identifier 'changebasis' has not been declared or assigned
+
+In file "qc_C161.m", line 370, column 29:
+>>                             good_affine_rat_pts_xy_no_bpt[min_i]; 
+                               ^
+User error: Identifier 'good_affine_rat_pts_xy_no_bpt' has not been declared or assigned
+
+In file "qc_C161.m", line 378, column 16:
+>>   Qpti := i lt global_base_point_index select good_Qpoints[i]
+                  ^
+User error: Identifier 'global_base_point_index' has not been declared or assigned
+
+In file "qc_C161.m", line 439, column 37:
+>> local_height_list := [*0 : k in [1..numberofpoints]*];
+                                       ^
+User error: Identifier 'numberofpoints' has not been declared or assigned
+
+In file "qc_C161.m", line 440, column 30:
+>> E1_E2_list := [*0 : k in [1..numberofpoints]*];
+                                ^
+User error: Identifier 'numberofpoints' has not been declared or assigned
+
+In file "qc_C161.m", line 441, column 15:
+>> for k := 1 to numberofpoints do
+                 ^
+User error: Identifier 'numberofpoints' has not been declared or assigned
+
+In file "qc_C161.m", line 450, column 20:
+>> assert #heights eq g+1;
+                      ^
+User error: Identifier 'g' has not been declared or assigned
+
+In file "qc_C161.m", line 455, column 41:
+>> E1_E2_Ps_matrix := Matrix(pAdicField(p, NE1E2Ps), [Eltseq(E1_E2) : E1_E2 in E1_E2_P_vectors]);
+                                           ^
+User error: Identifier 'NE1E2Ps' has not been declared or assigned
+
+In file "qc_C161.m", line 456, column 8:
+>> mat := E1_E2_Ps_matrix^(-1) ;
+          ^
+User error: Identifier 'E1_E2_Ps_matrix' has not been declared or assigned
+
+In file "qc_C161.m", line 457, column 20:
+>> matprec := minprec(mat);
+                      ^
+User error: Identifier 'mat' has not been declared or assigned
+
+In file "qc_C161.m", line 459, column 28:
+>> Qpht := pAdicField(p, Min([matprec, NE1E2Ps, Nhts]));
+                              ^
+User error: Identifier 'matprec' has not been declared or assigned
+
+In file "qc_C161.m", line 460, column 26:
+>> heights_vector := Matrix(Qpht, g+1,1, [ht : ht in heights]);
+                            ^
+User error: Identifier 'Qpht' has not been declared or assigned
+
+In file "qc_C161.m", line 461, column 29:
+>> height_coeffs := ChangeRing(mat, Qpht)*heights_vector;
+                               ^
+User error: Identifier 'mat' has not been declared or assigned
+
+In file "qc_C161.m", line 463, column 6:
+>> c := height_coeffs[3,1];
+        ^
+User error: Identifier 'height_coeffs' has not been declared or assigned
+
+In file "qc_C161.m", line 466, column 26:
+>> away_contributions := [a*c : a in all_factors_away];
+                            ^
+User error: Identifier 'c' has not been declared or assigned
+
+In file "qc_C161.m", line 467, column 23:
+>> "away_contributions", away_contributions ;
+                         ^
+User error: Identifier 'away_contributions' has not been declared or assigned
+
+In file "qc_C161.m", line 471, column 22:
+>> Nhtcoeffs := minprec(height_coeffs); // Precision of height_coeffs
+                        ^
+User error: Identifier 'height_coeffs' has not been declared or assigned
+
+In file "qc_C161.m", line 472, column 14:
+>> c3 := minval(height_coeffs);
+                ^
+User error: Identifier 'height_coeffs' has not been declared or assigned
+
+In file "qc_C161.m", line 476, column 15:
+>> for l := 1 to numberofpoints do
+                 ^
+User error: Identifier 'numberofpoints' has not been declared or assigned
+
+In file "qc_C161.m", line 492, column 49:
+>>     printf "disk %o\n expansion: %o \n\n", [Fp!(Qppoints[i]`x), Fp!(Qppoints[i]`b[2])], ChangePrecision(F_list[i], 3);
+                                                   ^
+User error: Identifier 'Qppoints' has not been declared or assigned
+
+In file "qc_C161.m", line 497, column 15:
+>> c2 := Min([0, valbetafil, minvaleqsplit, valbetafil+ minvaleqsplit]); 
+                 ^
+User error: Identifier 'valbetafil' has not been declared or assigned
+
+In file "qc_C161.m", line 500, column 30:
+>> i0_threshold := Min([valeta, valbetafil/2, (minvalgammafil-c2)/2]);
+                                ^
+User error: Identifier 'valbetafil' has not been declared or assigned
+
+In file "qc_C161.m", line 503, column 14:
+>> until -Floor(log(p,i0)) le i0_threshold;
+                ^
+User error: Identifier 'log' has not been declared or assigned
+
+In file "qc_C161.m", line 508, column 24:
+>>   valgammafili := i le maxdeggammafil select minvalgammafil else 0;
+                          ^
+User error: Identifier 'maxdeggammafil' has not been declared or assigned
+
+In file "qc_C161.m", line 552, column 24:
+>> Nend := Integers()!Min(Ncurrent, Nhtcoeffs); // Precision used for root finding 
+                          ^
+User error: Identifier 'Ncurrent' has not been declared or assigned
+
+In file "qc_C161.m", line 555, column 83:
+>>   printf " The quadratic Chabauty function is correct to precision %o^%o.\n",  p, Nend;
+                                                                                     ^
+User error: Identifier 'Nend' has not been declared or assigned
+
+In file "qc_C161.m", line 557, column 28:
+>> Qp_small   := pAdicField(p,Nend); 
+                              ^
+User error: Identifier 'Nend' has not been declared or assigned
+
+In file "qc_C161.m", line 558, column 25:
+>> Qptt := PowerSeriesRing(Qp_small,prec);
+                           ^
+User error: Identifier 'Qp_small' has not been declared or assigned
+
+In file "qc_C161.m", line 559, column 27:
+>> Zp_small   := pAdicRing(p,Nend);
+                             ^
+User error: Identifier 'Nend' has not been declared or assigned
+
+In file "qc_C161.m", line 560, column 24:
+>> Zpt  := PolynomialRing(Zp_small);
+                          ^
+User error: Identifier 'Zp_small' has not been declared or assigned
+
+In file "qc_C161.m", line 561, column 24:
+>> Qpt  := PolynomialRing(Qp_small);
+                          ^
+User error: Identifier 'Qp_small' has not been declared or assigned
+
+In file "qc_C161.m", line 567, column 15:
+>> for i := 1 to numberofpoints do
+                 ^
+User error: Identifier 'numberofpoints' has not been declared or assigned
+ All roots of the quadratic Chabauty function(s) are correct to precision at least 29^20.
+
+In file "qc_C161.m", line 699, column 29:
+>> number_of_known_rat_pts := #good_affine_rat_pts_xy;
+                               ^
+User error: Identifier 'good_affine_rat_pts_xy' has not been declared or assigned
+
+In file "qc_C161.m", line 706, column 13:
+>>   for pt in good_affine_rat_pts_xy do
+               ^
+User error: Identifier 'good_affine_rat_pts_xy' has not been declared or assigned
+
+In file "qc_C161.m", line 737, column 4:
+>> if number_of_known_rat_pts gt recovered_rat_pts_count then
+      ^
+User error: Identifier 'number_of_known_rat_pts' has not been declared or assigned
+
+In file "qc_C161.m", line 743, column 24:
+>> good_rat_pts_affine := good_affine_rat_pts_xy;
+                          ^
+User error: Identifier 'good_affine_rat_pts_xy' has not been declared or assigned
+
+Run the Mordell-Weil sieve to show there are no additional rational points in affine disks.
+
+In file "qc_C161.m", line 751, column 37:
+>> torsion_bas, torsion_orders, bas := generators(J);
+                                       ^
+User error: Identifier 'generators' has not been declared or assigned
+
+In file "qc_C161.m", line 752, column 9:
+>> assert #bas eq 2; // rank = 2
+           ^
+User error: Identifier 'bas' has not been declared or assigned
+Use independent points [ (x^2 - 1, -4*x - 3, 2), (x^2 - 3/4*x + 1/8, -71/16*x - 69/32, 2) ]
+
+In file "qc_C161.m", line 760, column 83:
+>> fake_coeffs_mod_pN, rat_coeffs_mod_pN := coefficients_mod_pN(fake_rat_pts_affine, good_rat_pts_affine, divisors, base_pt, splitting_indices, data_hol); 
+                                                                                     ^
+User error: Identifier 'good_rat_pts_affine' has not been declared or assigned
+
+In file "qc_C161.m", line 763, column 24:
+>> Append(~fake_coeffs, [ fake_coeffs_mod_pN ]);
+                          ^
+User error: Identifier 'fake_coeffs_mod_pN' has not been declared or assigned
+
+In file "qc_C161.m", line 768, column 25:
+>> qc_fake_coeffs_mod_M := coeffs_CRT(fake_coeffs, [p], [3]);
+                           ^
+User error: Identifier 'coeffs_CRT' has not been declared or assigned
+adding information mod n=4
+
+In file "qc_C161.m", line 772, column 45:
+>> time fake_coeffs_mod_M := combine_fake_good(qc_fake_coeffs_mod_M, M, n);
+                                               ^
+User error: Identifier 'qc_fake_coeffs_mod_M' has not been declared or assigned
+
+In file "qc_C161.m", line 774, column 22:
+>> "number of cosets", #fake_coeffs_mod_M;
+                        ^
+User error: Identifier 'fake_coeffs_mod_M' has not been declared or assigned
+Start the Mordell-Weil sieve
+
+In file "qc_C161.m", line 777, column 45:
+>> time done_fake := MWSieve(J, mws_primes, M, bas cat torsion_bas, X!base_pt, fake_coeffs_mod_M : known_rat_coeffs := rat_coeffs_mod_pN );
+                                               ^
+User error: Identifier 'bas' has not been declared or assigned
+
+In file "qc_C161.m", line 779, column 38:
+>> "done with the Mordell-Weil sieve?", done_fake;
+                                        ^
+User error: Identifier 'done_fake' has not been declared or assigned
+For sieving used the prime(s) [ 199, 373, 463 ]
+ Now look at the affine patch Z=0 (actually we only care about the disk at infinity).
+
+In file "qc_C161.m", line 791, column 10:
+>> Q_inf := y^2;
+            ^
+User error: Identifier 'y' has not been declared or assigned
+
+In file "qc_C161.m", line 793, column 9:
+>>   Q_inf -:= Coefficient(f_inf, j)*x^j; 
+           ^
+Runtime error in '-:=': Argument 1 has not been initialized
+Argument types given: *nothing ~, RngUPolElt[FldRat]
+
+> ChangeDirectory("~/Documents/Github/QCMod-NF/")
+> ;
+> AttachSpec("QCMOd.spec");
+
+In file "/Users/aashrayajha/Documents/GitHub/QCMod-NF/hecke_correspondence.m", line 83, column 13:
+>>           AQ[j,k] := lindepQp(pAdicField(q, N-1)!A[j,k]);    // recognition of integer in Zp via LLL^M
+               ^
+User error: Identifier 'AQ' has not been declared or assigned
+
+Cannot attach file /Users/aashrayajha/Documents/GitHub/QCMod-NF/hecke_correspondence.m referenced from spec file /Users/aashrayajha/Documents/GitHub/QCMod-NF/QCMOd.spec
+Can't attach intrinsics of /Users/aashrayajha/Documents/GitHub/QCMod-NF/hecke_correspondence.m

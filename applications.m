@@ -37,7 +37,10 @@ function Fp_points(data);
   Fp, res := ResidueClassField(v);
   Fpx := RationalFunctionField(Fp);
   Fpxy := PolynomialRing(Fpx);
+  
+  //f is going to be Q mod p.
   f:=Fpxy!0;
+  
   for i:=0 to d do
     cQi := Coefficient(Q, i);
     for j:=0 to Degree(cQi) do

@@ -1,4 +1,4 @@
-freeze;
+//freeze;
 
 import "auxpolys.m": auxpolys, genus, is_integral, log, smooth;
 import "coho.m": ord_0_mat, ord_inf_mat, mat_W0, mat_Winf, con_mat, ddx_mat, jordan_inf, jordan_0, ram, basis_coho;
@@ -301,13 +301,23 @@ function set_bad_point(x,b,inf,data)
 
 end function;
 
+// function set_place(K,data)
+
+// if Degree(K) eq 1 then
+//   v:=p*Integers(K);
+//  else 
+//   v:=data`v;
+//  end if; 
 
 function is_bad(P,data)
 
   // check whether the point P is bad
 
-  x0:=P`x; r:=data`r; v:=data`v; p:=data`p; N:=data`N;
+  x0:=P`x; r:=data`r; p:=data`p; N:=data`N; v:=data`v;
+
   K := BaseRing(r);
+ // v:=set_place(K,data);
+  
   if IsCoercible(K, x0) then
     Qp := pAdicRing(p);
     x0 := K!x0;
@@ -1319,89 +1329,94 @@ end function;
 
 find_bad_point_in_disk:=function(P,data);
 
-  // Find the very bad point in the residue disk of a bad point P.
+ // Find the (a?) very bad point in the residue disk of a bad point P.
+ // Here P is stored as a record, see above in set_point, set_bad_point.
+ x0:=P`x; b:=P`b; Q:=data`Q; p:=data`p; N:=data`N; W0:=data`W0; Winf:=data`Winf; r:=data`r;
+ d:=Degree(Q); Qp:=Parent(x0); Qpy:=PolynomialRing(Qp); K:=BaseRing(BaseRing(Q)); v:=data`v;
 
-  x0:=P`x; b:=P`b; Q:=data`Q; p:=data`p; N:=data`N; W0:=data`W0; Winf:=data`Winf; r:=data`r;
-  d:=Degree(Q); K:=Parent(x0); Ky:=PolynomialRing(K); 
+//  if Degree(K) eq 1 then
+//   v:=p*Integers(K);
+//  else 
+//   v:=data`v;
+//  end if; 
+  
 
-  if not is_bad(P,data) then
-    error "Residue disk does not contain a bad point";
-  end if;
+ if not is_bad(P,data) then
+   error "Residue disk does not contain a bad point";
+ end if;
 
-  if P`inf then
-    x0:=K!0;
-  else
-    rQp:=Ky!Coefficients(r);
-    x0:=HenselLift(rQp,x0);
-  end if;
+ if P`inf then
+   x0:=Qp!0;
+ else
+   rQp:=Qpy!Coefficients(r);
+   x0:=HenselLift(rQp,x0);
+ end if;
 
-  Qt:=RationalFunctionField(RationalField()); Qty:=PolynomialRing(Qt);
+ Kt:=RationalFunctionField(K); Kty:=PolynomialRing(Kt);
 
-  f:=Qty!0;
-  for i:=0 to d do
-    for j:=0 to Degree(Coefficient(Q,i)) do
-      f:=f+Coefficient(Coefficient(Q,i),j)*Qty.1^i*Qt.1^j;
-    end for;
-  end for;  
-  FF:=FunctionField(f); // function field of curve
 
-  eP,index:=local_data(P,data);
+ f:=Kty!Q;
+ FF:=FunctionField(f); // function field of curve
 
-  if P`inf then
-    W:=Winf;
-  else
-    W:=W0;
-  end if;
+ eP,index:=local_data(P,data);
 
-  bfun:=[];
-  for i:=1 to d do
-    bi:=FF!0;
-    for j:=1 to d do
-      bi:=bi+W[i,j]*FF.1^(j-1);
-    end for;
-    bfun:=Append(bfun,bi);
-  end for;
+ if P`inf then
+   W:=Winf;
+ else
+   W:=W0;
+ end if;
 
-  if index eq 0 then
-    if P`inf then
-      xfun:=FF!(1/Qt.1);
-    else
-      xfun:=FF!(Qt.1);
-    end if;
+ bfun:=[];
+ for i:=1 to d do
+   bi:=FF!0;
+   for j:=1 to d do
+     bi:=bi+W[i,j]*FF.1^(j-1);
+   end for;
+   bfun:=Append(bfun,bi);
+ end for;
 
-    for i:=1 to d do
-      poly:=minpoly(xfun,bfun[i]);
-      C:=Coefficients(poly);
-      D:=[];
-      for i:=1 to #C do
-        D[i]:=Evaluate(C[i],x0); 
-      end for;
-      fy:=Ky!D;
-      fac:=Factorisation(fy);
-      done:=false;
-      j:=1;
-      while not done and j le #fac do
-        if Degree(fac[j][1]) eq 1 and Valuation(-Coefficient(fac[j][1],0)-b[i]) gt 0 then
-          done:=true;
-          b[i]:=-Coefficient(fac[j][1],0);
-        end if;
-        j:=j+1;
-      end while;
-    end for;
+//bfun is finding a basis for K(X) over K[x]
+ if index eq 0 then
+   if P`inf then
+     xfun:=FF!(1/Kt.1);
+   else
+     xfun:=FF!(Kt.1);
+   end if;
+
+   for i:=1 to d do
+     poly:=minpoly(xfun,bfun[i]); //minpoly finds the minimum polynomial of bfun[i] over K(xfun)
+     C:=Coefficients(poly);
+     D:=[];
+     for i:=1 to #C do
+       D[i]:=eval_poly_Qp(C[i],x0,v);
+     end for;
+     fy:=Qpy!D;
+     fac:=Factorisation(fy);
+     done:=false;
+     j:=1;
+     while not done and j le #fac do
+       if Degree(fac[j][1]) eq 1 and Valuation(-Coefficient(fac[j][1],0)-b[i]) gt 0 then
+         done:=true;
+         b[i]:=-Coefficient(fac[j][1],0);
+       end if;
+       j:=j+1;
+     end while;
+   end for;
   else
    bindex:=bfun[index];
+
    if P`inf then
-      xfun:=FF!(1/Qt.1);
+      xfun:=FF!(1/Kt.1);
     else
-      xfun:=FF!(Qt.1);
+      xfun:=FF!(Kt.1);
     end if;
     poly:=minpoly(xfun,bindex);
     C:=Coefficients(poly);
     D:=[];
     for i:=1 to #C do
-      D[i]:=Evaluate(C[i],x0); 
+      D[i]:=eval_poly_Qp(C[i],x0,v); 
     end for;
-    fy:=Ky!D;
+    fy:=Qpy!D;
     fac:=Factorisation(fy);
     done:=false;
     j:=1;
@@ -1418,9 +1433,9 @@ find_bad_point_in_disk:=function(P,data);
         C:=Coefficients(poly);
         D:=[];
         for i:=1 to #C do
-          D[i]:=Evaluate(C[i],b[index]); 
+          D[i]:=eval_poly_Qp(C[i],b[index],v); 
         end for;
-        fy:=Ky!D;
+        fy:=Qpy!D;
         fac:=Factorisation(fy); // Roots has some problems that Factorisation does not
         done:=false;
         j:=1;

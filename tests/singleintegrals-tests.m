@@ -1,19 +1,25 @@
-AttachSpec("coleman.spec");
-import "auxpolys.m": auxpolys, genus, is_integral, log, smooth;
-import "coho.m": ord_0_mat, ord_inf_mat, mat_W0, mat_Winf, con_mat, ddx_mat, jordan_inf, jordan_0, ram, basis_coho;
-import "froblift.m": frobenius, froblift, getrings;
-import "reductions.m": convert_to_Kxzzinvd, reduce_with_fs, red_lists, coho_red_fin, change_basis_b0binf, coho_red_inf, change_basis_binfb0;
-import "singleintegrals.m": max_prec, frobmatrix;
+AttachSpec("QCMod.spec");
+import "singleintegrals.m": max_prec, frobmatrix, is_bad, local_data, find_bad_point_in_disk, eval_poly_Qp;
 
-R<t> := PolynomialRing(Rationals());
-K<u> := NumberField(t^2 + t + 1);
-OK := Integers(K);
-Kx<x> := PolynomialRing(K);
-Kxy<y> := PolynomialRing(Kx);
-Q := y^4 + (u - 1)*y^3*x + (2*u + 2)*y*x^3 + (3*u + 2)*y^3 - 3*u*y*x^2 - u*x^3 - 3*y^2 + 3*u*y*x + 3*u*x^2 - 2*u*y + (-u + 1)*x + (u + 1);
+printf "Running tests for example curves over rationals...\n";
+load "data/quartic-test-data.m";
+load "data/short-coleman-test-data.m";
 
-p := 13;
-v := Factorization(p*OK)[1][1];
-N := 15;
+for i := 1 to #test_data_list do
+  data := short_coleman_data_list[i];
+  test := test_data_list[i];
+  test`Winf:=data`Winf;
+  test`v := data`p * Integers();
 
-time data := ColemanData(Q, v, N);
+   for j:=1 to #test_data_list[i]`bad_Qppoints do
+
+    P:=test`bad_Qppoints[j];
+    badpoint:=find_bad_point_in_disk(P,test);
+    
+    assert badpoint`x eq test_data_list[i]`vbad_Qppoints[j]`x ; 
+    assert badpoint`b eq test_data_list[i]`vbad_Qppoints[j]`b ;
+    assert badpoint`inf eq test_data_list[i]`vbad_Qppoints[j]`inf ;
+    end for;
+end for;
+
+//Add examples for number fields with other curves. 
