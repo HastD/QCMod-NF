@@ -1,5 +1,5 @@
 test_format := recformat<Q, level, p, N, prec, r, Delta, s, h1basis, g, rho, W0, cpm_prec, cpm,
-  sympl_coeffs, basis0, basis1, basis2, tadicprec, Qpoints, Qppproints, bad_Qppoints, good_Qpoints,
+  sympl_coeffs, basis0, basis1, basis2, tadicprec, Qpoints, Qppoints, bad_Qppoints, good_Qpoints,
   good_affine_rat_pts_xy, bad_affine_rat_pts_xy, bQ, bpt, ks, teichpoints, q, corresp, Tq,
   corr_loss, eqsplit, hodge_prec, eta, betafil, gammafil, hodge_loss, Nhodge, b0pt, NG, G_list,
   PhiAZb_to_b0, PhiAZb, PhiAZb_to_z, gammafil_listb_to_z, ptrans_P1, ptrans_P2, ptrans_out,
@@ -16,7 +16,9 @@ end function;
 
 test_NF := rec<test_format |
   tadicprec := 100,
-  
+
+Q := Polynomial([PolynomialRing(CyclotomicField(3)) | [[ RationalField() | 1, 1 ], [ RationalField() | 1, -1 ], [ RationalField() | 0, 3 ], [ RationalField() | 0, -1 ]], [[ RationalField() | 0, -2 ], [ RationalField() | 0, 3 ], [ RationalField() | 0, -3 ], [ RationalField() | 2, 2 ]], [[ RationalField() | -3, 0 ]], [[ RationalField() | 2, 3 ], [ RationalField() | -1, 1 ]], [[ RationalField() | 1, 0 ]]]),
+
   r := Polynomial([CyclotomicField(3) | [ RationalField() | 15, 3 ], [ RationalField() | -72, 18 ], [ RationalField() | 1773, 1926 ], [ RationalField() | -1086, -498 ], [ RationalField() | -3105, -3780 ], [ RationalField() | 12420, -108 ], [ RationalField() | 7731, 19026 ], [ RationalField() | -20466, -3510 ], [ RationalField() | -1890, -21438 ], [ RationalField() | 16140, 16080 ], [ RationalField() | -10296, -2691 ], [ RationalField() | 1224, -2736 ], [ RationalField() | 528, 624 ]]),
 
   Qpoints := [*

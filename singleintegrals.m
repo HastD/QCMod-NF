@@ -1485,7 +1485,7 @@ tiny_integrals_on_basis:=function(P1,P2,data:prec:=0,P:=0);
   // residue disk as P1 has to be specified.
 
   x1:=P1`x; x2:=P2`x; b1:=P1`b; b2:=P2`b; Q:=data`Q; p:=data`p; N:=data`N; W0:=data`W0; Winf:=data`Winf; r:=data`r; basis:=data`basis; N:=data`N;
-  d:=Degree(Q); lc_r:=LeadingCoefficient(r); W:=Winf*W0^(-1); K:=Parent(x1); 
+  d:=Degree(Q); lc_r:=LeadingCoefficient(r); W:=Winf*W0^(-1); Qp:=Parent(x1); K:=BaseRing(BaseRing(r));
 
   if not lie_in_same_disk(P1,P2,data) then
     error "the points do not lie in the same residue disk";
@@ -1496,10 +1496,10 @@ tiny_integrals_on_basis:=function(P1,P2,data:prec:=0,P:=0);
   //end if;
 
   if (Valuation(x1-x2)/Valuation(Parent(x1-x2)!p) ge N) and (Minimum([Valuation(b1[i]-b2[i])/Valuation(Parent(b1[i]-b2[i])!p):i in [1..d]]) ge N) then
-    return RSpace(K,#basis)!0, N*Degree(K);
+    return RSpace(Qp,#basis)!0, N*Degree(Qp);
   end if; 
 
-  if Degree(K) gt 1 then // P1 needs to be defined over Qp
+  if Degree(Qp) gt 1 then // P1 needs to be defined over Qp
     tinyPtoP2,NtinyPtoP2:=$$(P,P2,data);
     tinyPtoP1,NtinyPtoP1:=$$(P,P1,data);
     return tinyPtoP2-tinyPtoP1,Minimum(NtinyPtoP2,NtinyPtoP1);
@@ -1522,52 +1522,49 @@ tiny_integrals_on_basis:=function(P1,P2,data:prec:=0,P:=0);
     prec:=tadicprec(data,e);
   end if;
 
-  Kt:=LaurentSeriesRing(K,prec);
-  OK:=RingOfIntegers(K);
-  OKt:=LaurentSeriesRing(OK,prec);
+  Qpt:=LaurentSeriesRing(Qp,prec);
+  Zp:=RingOfIntegers(Qp);
+  Zpt:=LaurentSeriesRing(Zp,prec);
 
   xt,bt,index:=local_coord(P1,prec,data);
 
-  Qt<t>:=LaurentSeriesRing(RationalField(),prec);
-  xt:=Qt!xt;
-  btnew:=[Qt|];
-  for i:=1 to d do
-    btnew[i]:=Qt!bt[i];
-  end for;
+  Kt<t>:=LaurentSeriesRing(K,prec);
+  xt:=Kt!xt;
+  btnew:=[Kt!bt[i] : i in [1..d]];
   bt:=Vector(btnew);
 
   if P1`inf then
     xt:=1/xt;
-    xt:=Qt!Kt!xt; 
+    xt:=Kt!Qpt!xt; 
     Winv:=W0*Winf^(-1);          
     bt:=bt*Transpose(Evaluate(Winv,xt));
     for i:=1 to d do
-      bt[i]:=Qt!(Kt!bt[i]);
+      bt[i]:=Kt!(Qpt!bt[i]);
     end for; 
   end if;
 
   if P1`inf or not is_bad(P1,data) then 
-    denom:=Qt!Kt!(1/Evaluate(r,xt));
+    denom:=Kt!Qpt!(1/Evaluate(r,xt));
   else
     Qp:=pAdicField(p,N);
     Qpx:=PolynomialRing(Qp);
     rQp:=Qpx!r;
     zero:=HenselLift(rQp,x1);
     sQp:=rQp div (Qpx.1-zero);
-    denom:=Qt!Kt!((Qt!OKt!(xt-Coefficient(xt,0)))^(-1)*(Qt!Kt!(1/Evaluate(sQp,xt))));
+    denom:=Kt!Qpt!((Kt!Zpt!(xt-Coefficient(xt,0)))^(-1)*(Kt!Qpt!(1/Evaluate(sQp,xt))));
   end if;
 
-  derxt:=Qt!Kt!Derivative(xt); 
+  derxt:=Kt!Qpt!Derivative(xt); 
   diffs:=[];
   for i:=1 to #basis do
     basisxt:=Evaluate(basis[i],xt);
     for j:=1 to d do
-      basisxt[1][j]:=Qt!Kt!basisxt[1][j];
+      basisxt[1][j]:=Kt!Qpt!basisxt[1][j];
     end for;
     diffs[i]:=InnerProduct(Vector(basisxt*derxt*lc_r*denom),bt);
-    diffs[i]:=Qt!Kt!diffs[i];
+    diffs[i]:=Kt!Qpt!diffs[i];
     if Coefficient(diffs[i],-1) ne 0 then
-      diffs[i]:=diffs[i]-Coefficient(diffs[i],-1)*Kt.1^(-1); // temporary, deal with logs later, important for double integrals
+      diffs[i]:=diffs[i]-Coefficient(diffs[i],-1)*Qpt.1^(-1); // temporary, deal with logs later, important for double integrals
     end if;
   end for;
 
@@ -1607,7 +1604,7 @@ tiny_integrals_on_basis_to_z:=function(P,data:prec:=0);
   // local parameter are also returned.
 
   x0:=P`x; b:=P`b; Q:=data`Q; p:=data`p; N:=data`N; basis:=data`basis; r:=data`r; W0:=data`W0; Winf:=data`Winf;
-  d:=Degree(Q); lc_r:=LeadingCoefficient(r); W:=Winf*W0^(-1); K:=Parent(x0);
+  d:=Degree(Q); lc_r:=LeadingCoefficient(r); W:=Winf*W0^(-1); Qp:=Parent(x0); K:=BaseRing(BaseRing(r));
 
   if is_bad(P,data) and not is_very_bad(P,data) then // on a bad disk P needs to be very bad
     P1:=find_bad_point_in_disk(P,data);  
@@ -1631,7 +1628,7 @@ tiny_integrals_on_basis_to_z:=function(P,data:prec:=0);
   xtold:=xt;
   btold:=bt;
 
-  Qt<t>:=LaurentSeriesRing(RationalField(),prec);
+  Kt<t>:=LaurentSeriesRing(RationalField(),prec);
   xt:=Qt!xt;
   btnew:=[Qt|];
   for i:=1 to d do

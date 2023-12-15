@@ -7,6 +7,7 @@ _<x> := PolynomialRing(RationalField());
 short_coleman_data_list[1] := rec<short_coleman_data_format | 
 Q := Polynomial([PolynomialRing(RationalField()) | [0, 0, 1, 1], [-1, 0, -1, -1], [0, 1, -1], [1]]),
 p := 5,
+v :=5, //Just doing this for running an example on tiny integrals on basis
 N := 20,
 g := 3,
 W0 := MatrixAlgebra(FunctionField(RationalField()), 3) ! [ FunctionField(RationalField()) | [1], 0, 0, 0, [1], 0, 0, 0, [1] ],
