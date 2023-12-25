@@ -1,20 +1,17 @@
 AttachSpec("~/GitHub/CHIMP/CHIMP.spec");
 R<x> := PolynomialRing(Rationals());
-F<z3>:=NumberField(x^2+x+1);
-R<a,b,c> := PolynomialRing(F,3);
-S<x,y>:=PolynomialRing(F,2);
+// I picked the polredabs field to avoid confusions
+F<z> := NumberFieldExtra(x^2-x+1:prec:=300);
+z3 := -z;
 z3^2+z3+1 eq 0;
-sigma := InfinitePlaces(F)[1];
-f := a^4 + (z3-1)*a^3*b + (3*z3+2)*a^3*c -3*a^2*c^2 + (2*z3+2)*a*b^3 -
-3*z3*a*b^2*c + 3*z3*a*b*c^2 - 2*z3*a*c^3 - z3*b^3*c + 3*z3*b^2*c^2 +
-(-z3+1)*b*c^3 + (z3+1)*c^4;
-F:=x^4 + (z3-1)*x^3*y + (3*z3+2)*x^3 -3*x^2 + (2*z3+2)*x*y^3 -
-3*z3*x*y^2 + 3*z3*x*y - 2*z3*x - z3*y^3 + 3*z3*y^2 +
-(-z3+1)*y + (z3+1);
-C := CurveExtra(Curve(ProjectiveSpace(R),f) : prec:=300);
-X := RiemannSurface(F,sigma : Precision:=100);
-C;
-X;
+R<a,b,c> := PolynomialRing(F,3);
+f := a^4 + (z3-1)*a^3*b + (3*z3+2)*a^3*c -3*a^2*c^2 + (2*z3+2)*a*b^3 - 3*z3*a*b^2*c + 3*z3*a*b*c^2 - 2*z3*a*c^3 - z3*b^3*c + 3*z3*b^2*c^2 +(-z3+1)*b*c^3 + (z3+1)*c^4;
+C := Curve(ProjectiveSpace(R),f);
+
+// behind the scenes picks the riemannsurface
+_ := PeriodMatrix(C);
+X := C`riesrf;
+
 Cycles, IntersectionMat, SymplecticTransform := HomologyBasis(X);
 Omega1:= HolomorphicDifferentials(X);
-//HeuristicEndomorphismRepresentation(C);
+HeuristicEndomorphismRepresentation(C : Geometric:=true);
