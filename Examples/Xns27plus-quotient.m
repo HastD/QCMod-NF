@@ -111,4 +111,10 @@ E6elt := (1/124399*(267219*zeta + 115323)*a^10 + 1/124399*(5413916*zeta +
 jcanring := (1728*E4elt^3)/(E4elt^3 - E6elt^2);
 jmap := map<C -> ProjectiveSpace(K,1) | [Numerator(jcanring),Denominator(jcanring)]>;
 
-
+//L<z3>:=CyclotomicField(3);
+M:=pAdicField(3,200);
+S<t>:=PolynomialRing(M);
+Mprime<m>:=TotallyRamifiedExtension(M,t^2+3);
+z3:=(-m+1)/2;
+SS<x>:=PolynomialRing(Mprime);
+psi:=x^9+(9*z3-9)*x^8+(54*z3+27)*x^7+(54*z3-27/2)*x^6+(243*z3+972)*x^5+729*z3*x^4++(2916*z3-1458)*x^3+(37179*z3+41553)*x^2+(6561*z3+6561/8)*x-63423*z3+155277;
